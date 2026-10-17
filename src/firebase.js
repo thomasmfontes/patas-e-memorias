@@ -113,59 +113,55 @@ export function getCapsuleShareUrl(capsuleId) {
 
 /**
  * Fetches all registered pet capsules for the quick pet switcher.
- * Reads from localStorage cache immediately and syncs with Cloud Firestore.
+ * Queries Cloud Firestore directly as the single source of truth.
  */
 export async function getRegisteredPets() {
-  const petsMap = new Map();
-
-  // Instant response from local cache
-  try {
-    const cached = JSON.parse(localStorage.getItem('cached_pets_list') || '[]');
-    if (Array.isArray(cached)) {
-      cached.forEach(p => {
-        if (p && p.id) petsMap.set(p.id, p);
-      });
-    }
-  } catch (e) {}
-
   try {
     await ensureAuthenticated();
+    const firestorePets = new Map();
     const snap = await getDocs(collection(db, 'capsules'));
     snap.docs.forEach(docSnap => {
       const data = docSnap.data();
-      petsMap.set(docSnap.id, {
-        id: docSnap.id,
-        name: data.name || docSnap.id,
-        photo: data.photo || '',
-        subtitle: data.subtitle || data.years || ''
-      });
+      if (data && (data.name || data.photo || data.years)) {
+        firestorePets.set(docSnap.id, {
+          id: docSnap.id,
+          name: data.name || docSnap.id,
+          photo: data.photo || '',
+          subtitle: data.subtitle || data.years || ''
+        });
+      }
     });
 
-    // Check legacy Bento doc if not already present
-    if (!petsMap.has('bento')) {
-      try {
-        const legacyDoc = await getDoc(doc(db, 'capsule', 'profile'));
-        if (legacyDoc.exists()) {
-          const lData = legacyDoc.data();
-          petsMap.set('bento', {
+    // Check legacy Bento doc if exists
+    try {
+      const legacyDoc = await getDoc(doc(db, 'capsule', 'profile'));
+      if (legacyDoc.exists()) {
+        const lData = legacyDoc.data();
+        if (lData && lData.name) {
+          firestorePets.set('bento', {
             id: 'bento',
-            name: lData.name || 'Bento',
+            name: lData.name,
             photo: lData.photo || '',
             subtitle: lData.subtitle || lData.years || ''
           });
         }
-      } catch (err) {}
-    }
+      }
+    } catch (err) {}
+
+    const list = Array.from(firestorePets.values());
+    try {
+      localStorage.setItem('cached_pets_list', JSON.stringify(list));
+    } catch (e) {}
+
+    return list;
   } catch (err) {
     console.warn('Consulta a cápsulas no Firestore:', err);
+    try {
+      const cached = JSON.parse(localStorage.getItem('cached_pets_list') || '[]');
+      if (Array.isArray(cached)) return cached;
+    } catch (e) {}
+    return [];
   }
-
-  const list = Array.from(petsMap.values());
-  try {
-    localStorage.setItem('cached_pets_list', JSON.stringify(list));
-  } catch (e) {}
-
-  return list;
 }
 
 /**

@@ -24,9 +24,11 @@ try {
       window.history.replaceState(null, '', desiredPath);
     }
   }
-} catch (e) {
-  // Ignora se estiver em iframes restritos
-}
+} catch (e) {}
+
+try {
+  localStorage.removeItem('cached_pets_list');
+} catch (e) {}
 
 // App State (100% synchronized with Cloud Firestore)
 let memories = [];
@@ -216,11 +218,11 @@ async function renderPetsDropdown() {
   try {
     const pets = await getRegisteredPets();
 
-    // Garante que o pet ativo atual está na lista
-    if (capsuleProfile && !pets.some(p => p.id === activeCapsuleId)) {
+    // Garante que o pet ativo atual está na lista apenas se tiver perfil salvo
+    if (capsuleProfile && capsuleProfile.name && capsuleProfile.name.trim() && !pets.some(p => p.id === activeCapsuleId)) {
       pets.unshift({
         id: activeCapsuleId,
-        name: capsuleProfile.name || activeCapsuleId,
+        name: capsuleProfile.name,
         photo: capsuleProfile.photo || '',
         subtitle: capsuleProfile.subtitle || capsuleProfile.years || ''
       });
@@ -228,8 +230,9 @@ async function renderPetsDropdown() {
 
     if (pets.length === 0) {
       listEl.innerHTML = `
-        <div style="padding: 14px; text-align: center; font-size: 12px; color: var(--text-muted);">
-          Nenhum companheiro registrado ainda.
+        <div style="padding: 18px 12px; text-align: center; font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">
+          Nenhum companheiro cadastrado ainda.<br>
+          <span style="font-size: 11.5px; color: var(--text-light);">Adicione um novo no botão abaixo.</span>
         </div>
       `;
       return;
