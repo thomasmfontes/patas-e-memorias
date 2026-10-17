@@ -78,15 +78,18 @@ function formatYear(dateStr) {
 }
 
 // Toast helper
+let toastTimeout = null;
 function showToast(message) {
   const toast = document.getElementById('toastNotice');
   const msgEl = document.getElementById('toastMessage');
   if (toast && msgEl) {
     msgEl.textContent = message;
     toast.classList.add('show');
-    setTimeout(() => {
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
       toast.classList.remove('show');
-    }, 3000);
+      toastTimeout = null;
+    }, 3200);
   }
 }
 
