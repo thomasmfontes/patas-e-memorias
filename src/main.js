@@ -120,17 +120,21 @@ function renderCapsuleProfile() {
   if (!capsuleProfile) {
     if (photoImg) photoImg.style.display = 'none';
     if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
-    if (nameEl) nameEl.textContent = 'Sua Cápsula';
+    const fallbackName = (activeCapsuleId !== 'bento') 
+      ? (activeCapsuleId.charAt(0).toUpperCase() + activeCapsuleId.slice(1)) 
+      : 'Sua Cápsula';
+
+    if (nameEl) nameEl.textContent = fallbackName;
     if (yearsEl) yearsEl.textContent = 'Configure o perfil';
     if (dotEl) dotEl.style.display = 'none';
     if (subtitleEl) subtitleEl.textContent = '';
     if (epitaphEl) {
       epitaphEl.textContent = 'Personalize os dados do seu companheiro para eternizar cada lembrança com carinho.';
     }
-    if (brandTag) brandTag.textContent = 'Cápsula Digital';
-    if (timelineTitle) timelineTitle.textContent = 'A Jornada';
-    document.title = 'Patas & Memórias 🐾';
-    updatePetSwitcherUI(true);
+    if (brandTag) brandTag.textContent = (fallbackName !== 'Sua Cápsula') ? `Cápsula Digital • ${fallbackName}` : 'Cápsula Digital';
+    if (timelineTitle) timelineTitle.textContent = (fallbackName !== 'Sua Cápsula') ? `A Jornada de ${fallbackName}` : 'A Jornada';
+    document.title = (fallbackName !== 'Sua Cápsula') ? `Patas & Memórias • ${fallbackName} 🐾` : 'Patas & Memórias 🐾';
+    updatePetSwitcherUI(false);
     return;
   }
 
@@ -1009,6 +1013,14 @@ function openProfileModal() {
       }
     }
   } else {
+    if (nameInput) {
+      nameInput.value = (activeCapsuleId !== 'bento')
+        ? (activeCapsuleId.charAt(0).toUpperCase() + activeCapsuleId.slice(1))
+        : '';
+    }
+    if (yearsInput) yearsInput.value = '';
+    if (subtitleInput) subtitleInput.value = '';
+    if (epitaphInput) epitaphInput.value = '';
     currentProfilePhotoDataUrl = '';
     if (preview) preview.src = '';
     if (previewWrap) previewWrap.style.display = 'none';
@@ -1138,8 +1150,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         confirmText: 'Criar Cápsula'
       });
       if (petName && petName.trim()) {
-        const slug = sanitizeCapsuleId(petName);
-        window.location.href = `/${encodeURIComponent(slug)}`;
+        const cleanName = petName.trim();
+        const slug = sanitizeCapsuleId(cleanName);
+
+        // Salva imediatamente a nova cápsula no Firestore com o nome preenchido
+        try {
+          showToast(`Iniciando cápsula de ${cleanName}...`);
+          await saveCapsuleProfile(slug, {
+            name: cleanName,
+            years: '',
+            subtitle: '',
+            epitaph: '',
+            photo: ''
+          });
+        } catch (err) {
+          console.error('Erro ao salvar cápsula inicial:', err);
+        }
+
+        // Se for o mesmo pet da página atual, atualiza a tela instantaneamente
+        if (slug === activeCapsuleId) {
+          capsuleProfile = { ...(capsuleProfile || {}), name: cleanName };
+          renderCapsuleProfile();
+          showToast(`Cápsula de ${cleanName} pronta!`);
+          return;
+        }
+
+        // Redireciona para a rota do novo pet
+        window.location.href = (slug === 'bento') ? '/' : `/${encodeURIComponent(slug)}`;
       }
     });
   }
