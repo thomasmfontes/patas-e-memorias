@@ -326,15 +326,18 @@ body.modal-open {
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  margin: 0;
+  font-size: 0;
+  line-height: 0;
   background: var(--surface-alt);
-  border: 1.5px solid rgba(156, 66, 43, 0.2);
+  border: 1.5px solid rgba(156, 66, 43, 0.22);
   color: var(--primary);
   cursor: pointer;
   transition: all 0.18s ease;
@@ -344,9 +347,10 @@ body.modal-open {
 }
 
 .btn-edit-profile svg {
-  width: 22px;
-  height: 22px;
+  width: 25px;
+  height: 25px;
   display: block;
+  flex-shrink: 0;
 }
 
 .btn-edit-profile:active {
@@ -2662,8 +2666,8 @@ body.modal-open {
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   margin-top: 0;
   border-radius: 50%;
   border-color: transparent;
