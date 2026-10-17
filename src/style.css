@@ -795,7 +795,7 @@ body.modal-open {
 .memory-card {
   background: var(--surface);
   border: 1px solid var(--border-delicate);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-card);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -990,7 +990,7 @@ body.modal-open {
   padding: 44px 20px;
   background: var(--surface);
   border: 1px solid var(--border-delicate);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
@@ -1137,7 +1137,7 @@ body.modal-open {
 .gallery-toolbar {
   background: var(--surface);
   border: 1px solid var(--border-delicate);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: 24px 22px 20px 22px;
   display: flex;
   flex-direction: column;
@@ -1253,7 +1253,7 @@ body.modal-open {
 .timeline-header-card {
   background: var(--surface);
   border: 1px solid var(--border-delicate);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: 24px 22px 20px 22px;
   display: flex;
   flex-direction: column;
@@ -2483,9 +2483,17 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48px;
+  color: var(--primary);
   box-shadow: 0 8px 24px rgba(70, 40, 20, 0.08);
   transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.placeholder-camera-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--primary);
+  opacity: 0.82;
+  transition: transform 0.22s ease, opacity 0.22s ease;
 }
 
 .tribute-photo-wrap:hover .tribute-photo-placeholder {
@@ -2493,25 +2501,9 @@ body.modal-open {
   background: var(--primary-light);
 }
 
-.btn-edit-profile {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: var(--surface-alt);
-  border: 1px solid var(--border-delicate);
-  border-radius: var(--radius-full);
-  color: var(--primary);
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-edit-profile:hover {
-  background: var(--primary-light);
-  border-color: rgba(156, 66, 43, 0.25);
+.tribute-photo-wrap:hover .placeholder-camera-icon {
+  transform: scale(1.12);
+  opacity: 1;
 }
 
 /* ============================================================= */
