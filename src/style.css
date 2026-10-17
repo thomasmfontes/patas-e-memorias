@@ -255,6 +255,7 @@ body.modal-open {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   transition: box-shadow 0.2s ease;
+  scroll-margin-top: 80px;
 }
 
 /* Profile Card */
@@ -269,6 +270,7 @@ body.modal-open {
   border: 1px solid var(--border-delicate);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
+  scroll-margin-top: 80px;
 }
 
 .tribute-photo-wrap {
@@ -2678,6 +2680,8 @@ body.modal-open {
   border-radius: 8px;
   margin: 0 0 10px 0;
   color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
   background: linear-gradient(
     90deg,
     #f2ede5 25%,
@@ -2695,6 +2699,8 @@ body.modal-open {
   border-radius: 6px;
   margin: 0 0 14px 0;
   color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
   background: linear-gradient(
     90deg,
     #f2ede5 25%,
@@ -2718,6 +2724,8 @@ body.modal-open {
   margin: 0 0 16px 0;
   padding: 0;
   color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
 }
 
 .profile-card.is-loading .profile-epitaph::before {

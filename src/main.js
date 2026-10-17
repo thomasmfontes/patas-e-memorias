@@ -13,6 +13,14 @@ import {
   compressImageToDataUrl
 } from './firebase.js';
 
+// Enforce manual scroll restoration to completely eliminate reload layout shifts and jumps
+try {
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  window.scrollTo(0, 0);
+} catch (e) {}
+
 // Active Pet Capsule Identifier resolved from NFC URL tag
 const activeCapsuleId = getCurrentCapsuleId();
 
@@ -1062,6 +1070,13 @@ function closeProfileModal() {
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  } catch (e) {}
+
   // Never show browser native alert/prompt/confirm dialogs
   window.alert = (msg) => {
     if (msg) showToast(String(msg));
