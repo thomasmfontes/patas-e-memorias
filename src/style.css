@@ -347,8 +347,7 @@ body.modal-open {
 }
 
 .btn-edit-profile svg {
-  width: 25px;
-  height: 25px;
+  width: 15px;
   display: block;
   flex-shrink: 0;
 }
@@ -1754,13 +1753,41 @@ body.modal-open {
   display: block;
 }
 
+/* Profile Photo Uploader Arch Preview (Faithfully mirrors card architecture) */
+.upload-profile-dropzone {
+  padding: 20px 16px 16px 16px;
+}
+
+.modal-profile-tribute-wrap {
+  position: relative;
+  width: 154px;
+  height: 184px;
+  margin: 6px auto 14px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-profile-tribute-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 84px 84px 20px 20px;
+  border: 1.5px dashed rgba(201, 148, 62, 0.45);
+  pointer-events: none;
+}
+
 .profile-preview-img {
-  max-height: 180px;
-  max-width: 180px;
-  border-radius: 50%;
-  aspect-ratio: 1 / 1;
-  border: 3px solid var(--border-delicate);
-  box-shadow: none;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  border-radius: 78px 78px 14px 14px; /* True architectural arch mirroring card */
+  border: 3px solid rgba(201, 133, 59, 0.48);
+  box-shadow: 0 10px 26px rgba(70, 40, 20, 0.14);
+  display: block;
+  background: #f0e9df;
 }
 
 .upload-overlay-actions {
