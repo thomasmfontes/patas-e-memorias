@@ -83,14 +83,14 @@ export function getCurrentCapsuleId() {
     console.warn('Erro ao resolver capsuleId da URL:', e);
   }
 
-  return 'bento';
+  return '';
 }
 
 /**
  * Sanitizes a string for use as a Firestore document ID / NFC URL slug.
  */
 export function sanitizeCapsuleId(str) {
-  if (!str) return 'bento';
+  if (!str) return '';
   return String(str)
     .trim()
     .toLowerCase()
@@ -98,7 +98,7 @@ export function sanitizeCapsuleId(str) {
     .replace(/[\u0300-\u036f]/g, '') // remove acentos
     .replace(/[^a-z0-9_-]/g, '-')    // caracteres seguros
     .replace(/-+/g, '-')             // remove duplicatas
-    .slice(0, 64) || 'bento';
+    .slice(0, 64);
 }
 
 /**
@@ -108,7 +108,7 @@ export function sanitizeCapsuleId(str) {
 export function getCapsuleShareUrl(capsuleId) {
   const origin = window.location.origin;
   const id = sanitizeCapsuleId(capsuleId);
-  return id === 'bento' ? `${origin}/` : `${origin}/${encodeURIComponent(id)}`;
+  return id ? `${origin}/${encodeURIComponent(id)}` : `${origin}/`;
 }
 
 /**
@@ -131,22 +131,6 @@ export async function getRegisteredPets() {
         });
       }
     });
-
-    // Check legacy Bento doc if exists
-    try {
-      const legacyDoc = await getDoc(doc(db, 'capsule', 'profile'));
-      if (legacyDoc.exists()) {
-        const lData = legacyDoc.data();
-        if (lData && lData.name) {
-          firestorePets.set('bento', {
-            id: 'bento',
-            name: lData.name,
-            photo: lData.photo || '',
-            subtitle: lData.subtitle || lData.years || ''
-          });
-        }
-      }
-    } catch (err) {}
 
     const list = Array.from(firestorePets.values());
     try {
@@ -200,6 +184,10 @@ export function ensureAuthenticated() {
  */
 export function subscribeToCapsuleProfile(capsuleId, onUpdate, onError) {
   const safeId = sanitizeCapsuleId(capsuleId);
+  if (!safeId) {
+    onUpdate(null);
+    return () => {};
+  }
   const capsuleDocRef = doc(db, 'capsules', safeId);
 
   return onSnapshot(
@@ -295,6 +283,10 @@ export async function saveCapsuleProfile(capsuleId, { name, years, subtitle, epi
  */
 export function subscribeToMemories(capsuleId, onUpdate, onError) {
   const safeId = sanitizeCapsuleId(capsuleId);
+  if (!safeId) {
+    onUpdate([]);
+    return () => {};
+  }
   const memoriesRef = collection(db, 'capsules', safeId, 'memories');
   const q = query(memoriesRef, orderBy('createdAt', 'desc'));
 

@@ -22,12 +22,12 @@ try {
 } catch (e) {}
 
 // Active Pet Capsule Identifier resolved from NFC URL tag
-const activeCapsuleId = getCurrentCapsuleId();
+let activeCapsuleId = getCurrentCapsuleId();
 
 // Manter a barra de endereço sempre limpa e elegante (ex: /thor ao invés de ?pet=thor)
 try {
   if (window.history && window.history.replaceState) {
-    const desiredPath = activeCapsuleId === 'bento' ? '/' : `/${encodeURIComponent(activeCapsuleId)}`;
+    const desiredPath = !activeCapsuleId ? '/' : `/${encodeURIComponent(activeCapsuleId)}`;
     if (window.location.search || (window.location.pathname !== desiredPath && (window.location.pathname.startsWith('/p/') || window.location.pathname.startsWith('/pet/')))) {
       window.history.replaceState(null, '', desiredPath);
     }
@@ -128,9 +128,9 @@ function renderCapsuleProfile() {
   if (!capsuleProfile) {
     if (photoImg) photoImg.style.display = 'none';
     if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
-    const fallbackName = (activeCapsuleId !== 'bento') 
+    const fallbackName = (activeCapsuleId && activeCapsuleId !== 'bento') 
       ? (activeCapsuleId.charAt(0).toUpperCase() + activeCapsuleId.slice(1)) 
-      : 'Sua Cápsula';
+      : 'Seu Companheiro';
 
     if (nameEl) nameEl.textContent = fallbackName;
     if (yearsEl) yearsEl.textContent = 'Configure o perfil';
@@ -140,13 +140,13 @@ function renderCapsuleProfile() {
       epitaphEl.textContent = 'Personalize os dados do seu companheiro para eternizar cada lembrança com carinho.';
     }
     if (brandTag) brandTag.textContent = 'Cápsula Digital';
-    if (timelineTitle) timelineTitle.textContent = (fallbackName !== 'Sua Cápsula') ? `A Jornada de ${fallbackName}` : 'A Jornada';
-    document.title = (fallbackName !== 'Sua Cápsula') ? `Patas & Memórias • ${fallbackName} 🐾` : 'Patas & Memórias 🐾';
+    if (timelineTitle) timelineTitle.textContent = (fallbackName !== 'Seu Companheiro') ? `A Jornada de ${fallbackName}` : 'A Jornada';
+    document.title = (fallbackName !== 'Seu Companheiro') ? `Patas & Memórias • ${fallbackName} 🐾` : 'Patas & Memórias 🐾';
     updatePetSwitcherUI(false);
     return;
   }
 
-  const petName = capsuleProfile.name || 'Sua Cápsula';
+  const petName = capsuleProfile.name || 'Seu Companheiro';
   if (nameEl) nameEl.textContent = petName;
   if (brandTag) brandTag.textContent = 'Cápsula Digital';
   if (timelineTitle) timelineTitle.textContent = `A Jornada de ${petName}`;
@@ -200,7 +200,7 @@ function updatePetSwitcherUI(isLoading = false) {
     return;
   }
 
-  const displayName = capsuleProfile?.name || (activeCapsuleId === 'bento' ? 'Bento' : activeCapsuleId);
+  const displayName = capsuleProfile?.name || (activeCapsuleId && activeCapsuleId !== 'bento' ? (activeCapsuleId.charAt(0).toUpperCase() + activeCapsuleId.slice(1)) : 'Novo Pet');
   if (switcherPetName) switcherPetName.textContent = displayName;
 
   if (capsuleProfile?.photo && switcherAvatar && switcherFallback) {
@@ -228,8 +228,10 @@ async function syncRegisteredPets() {
     const pets = await getRegisteredPets();
     cachedPetsList = pets || [];
     renderPetsDropdown();
+    return cachedPetsList;
   } catch (err) {
     console.warn('Erro ao sincronizar pets:', err);
+    return [];
   }
 }
 
@@ -291,7 +293,7 @@ function renderPetsDropdown() {
       const petId = btn.getAttribute('data-pet-id');
       closePetSwitcher();
       if (petId !== activeCapsuleId) {
-        const targetUrl = petId === 'bento' ? '/' : `/${encodeURIComponent(petId)}`;
+        const targetUrl = `/${encodeURIComponent(petId)}`;
         window.location.href = targetUrl;
       }
     });
@@ -1101,7 +1103,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     await ensureAuthenticated();
-    syncRegisteredPets();
+    const existingPets = await syncRegisteredPets();
+
+    // Se acessou a raiz sem pet na URL e já existem pets, seleciona o primeiro pet
+    if (!activeCapsuleId && existingPets && existingPets.length > 0) {
+      activeCapsuleId = existingPets[0].id;
+    }
+
+    // Se o banco estiver vazio (nenhum pet cadastrado) e não tiver pet na URL, abre direto o modal para criar o primeiro companheiro!
+    if ((!existingPets || existingPets.length === 0) && !activeCapsuleId) {
+      isLoadingProfile = false;
+      isLoadingMemories = false;
+      renderCapsuleProfile();
+      renderAll();
+
+      setTimeout(async () => {
+        const petName = await showPromptModal({
+          title: 'Boas-vindas ao Patas & Memórias',
+          message: 'Qual o nome do seu companheiro para iniciar a cápsula digital?',
+          placeholder: 'Ex: Luna, Mel, Thor...',
+          confirmText: 'Criar Cápsula',
+          cancelText: 'Pular'
+        });
+
+        if (petName && petName.trim()) {
+          const cleanName = petName.trim();
+          const slug = sanitizeCapsuleId(cleanName) || 'pet';
+          showToast(`Iniciando cápsula de ${cleanName}... 🐾`);
+          await saveCapsuleProfile(slug, {
+            name: cleanName,
+            years: '',
+            subtitle: '',
+            epitaph: '',
+            photo: ''
+          });
+          window.location.href = `/${encodeURIComponent(slug)}`;
+        }
+      }, 150);
+      return;
+    }
 
     // Subscribe to capsule profile for the active NFC Pet
     subscribeToCapsuleProfile(
@@ -1201,7 +1241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Redireciona para a rota do novo pet
-        window.location.href = (slug === 'bento') ? '/' : `/${encodeURIComponent(slug)}`;
+        window.location.href = `/${encodeURIComponent(slug)}`;
       }
     });
   }
