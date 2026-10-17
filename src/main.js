@@ -1,6 +1,7 @@
-// Patas & Memórias • Aplicação Conectada 100% ao Firebase (Auth + Cloud Firestore)
+// Patas & Memórias • Aplicação Conectada 100% ao Firebase (Auth + Cloud Firestore • NFC Multi-Pet)
 import {
   ensureAuthenticated,
+  getCurrentCapsuleId,
   subscribeToMemories,
   createMemory,
   toggleMemoryFavorite,
@@ -9,6 +10,9 @@ import {
   saveCapsuleProfile,
   compressImageToDataUrl
 } from './firebase.js';
+
+// Active Pet Capsule Identifier resolved from NFC URL tag
+const activeCapsuleId = getCurrentCapsuleId();
 
 // App State (100% synchronized with Cloud Firestore)
 let memories = [];
@@ -86,6 +90,11 @@ function renderCapsuleProfile() {
   const epitaphEl = document.getElementById('profilePetEpitaph');
   const brandTag = document.getElementById('brandTagText');
   const timelineTitle = document.getElementById('timelineHeaderTitle');
+  const nfcActivationBanner = document.getElementById('nfcActivationBanner');
+  const modalTagIdCode = document.getElementById('modalTagIdCode');
+  const profileModalHeading = document.getElementById('profileModalHeading');
+
+  if (modalTagIdCode) modalTagIdCode.textContent = activeCapsuleId;
 
   if (isLoadingProfile) {
     if (profileCard) profileCard.classList.add('is-loading');
@@ -95,25 +104,44 @@ function renderCapsuleProfile() {
   if (profileCard) profileCard.classList.remove('is-loading');
 
   if (!capsuleProfile) {
+    // Tag scanned for the first time or capsule not yet configured
     if (photoImg) photoImg.style.display = 'none';
     if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
-    if (nameEl) nameEl.textContent = 'Sua Cápsula';
-    if (yearsEl) yearsEl.textContent = 'Configure o perfil';
     if (dotEl) dotEl.style.display = 'none';
     if (subtitleEl) subtitleEl.textContent = '';
-    if (epitaphEl) {
-      epitaphEl.textContent = 'Personalize os dados do seu companheiro para eternizar cada lembrança com carinho.';
+    
+    if (activeCapsuleId === 'bento') {
+      if (nameEl) nameEl.textContent = 'Sua Cápsula';
+      if (yearsEl) yearsEl.textContent = 'Configure o perfil';
+      if (epitaphEl) {
+        epitaphEl.textContent = 'Personalize os dados do seu companheiro para eternizar cada lembrança com carinho.';
+      }
+      if (brandTag) brandTag.textContent = 'Cápsula Digital';
+      if (nfcActivationBanner) nfcActivationBanner.style.display = 'none';
+    } else {
+      if (nameEl) nameEl.textContent = 'Novo Pote Conectado';
+      if (yearsEl) yearsEl.textContent = 'Toque para ativar';
+      if (epitaphEl) {
+        epitaphEl.textContent = 'Este pote de ração está pronto para ser conectado ao seu pet. Toque em "Cadastrar Pet" para ativar a cápsula!';
+      }
+      if (brandTag) brandTag.textContent = `Pote #${activeCapsuleId}`;
+      if (nfcActivationBanner) nfcActivationBanner.style.display = 'flex';
     }
-    if (brandTag) brandTag.textContent = 'Cápsula Digital';
+
+    if (profileModalHeading) profileModalHeading.textContent = 'Ativar Cápsula do Pote';
     if (timelineTitle) timelineTitle.textContent = 'A Jornada';
-    document.title = 'Patas & Memórias 🐾';
+    document.title = `Patas & Memórias • Pote #${activeCapsuleId} 🐾`;
     return;
   }
+
+  // Capsule is configured
+  if (nfcActivationBanner) nfcActivationBanner.style.display = 'none';
+  if (profileModalHeading) profileModalHeading.textContent = 'Dados do Companheiro';
 
   const petName = capsuleProfile.name || 'Sua Cápsula';
   if (nameEl) nameEl.textContent = petName;
   if (brandTag) {
-    brandTag.textContent = capsuleProfile.name ? `Cápsula Digital • ${capsuleProfile.name}` : 'Cápsula Digital';
+    brandTag.textContent = capsuleProfile.name ? `Cápsula Digital • ${capsuleProfile.name}` : `Pote #${activeCapsuleId}`;
   }
   if (timelineTitle) timelineTitle.textContent = `A Jornada de ${petName}`;
   document.title = `Patas & Memórias • ${petName} 🐾`;
@@ -795,8 +823,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await ensureAuthenticated();
 
-    // Subscribe to capsule profile
+    // Subscribe to capsule profile for the active NFC Pet
     subscribeToCapsuleProfile(
+      activeCapsuleId,
       (profileData) => {
         capsuleProfile = profileData;
         isLoadingProfile = false;
@@ -809,8 +838,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     );
 
-    // Subscribe to memories collection
+    // Subscribe to memories collection for the active NFC Pet
     subscribeToMemories(
+      activeCapsuleId,
       (items) => {
         memories = items;
         isLoadingMemories = false;
@@ -830,6 +860,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderAll();
     showToast('Não foi possível conectar. Tente novamente mais tarde.');
     console.error('Erro de conexão:', err);
+  }
+
+  // NFC Activate Pote button click (For unclaimed tags)
+  const btnActivatePote = document.getElementById('btnActivatePote');
+  if (btnActivatePote) {
+    btnActivatePote.addEventListener('click', () => {
+      openProfileModal();
+    });
   }
 
   // Tab switching
@@ -911,7 +949,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (mem) {
           const nextState = !mem.isFavorite;
           try {
-            await toggleMemoryFavorite(id, nextState);
+            await toggleMemoryFavorite(activeCapsuleId, id, nextState);
             showToast(nextState ? 'Salva nos favoritos ❤️' : 'Removida dos favoritos');
           } catch (err) {
             console.error('Erro ao atualizar favorito:', err);
@@ -936,7 +974,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (confirmed) {
           try {
-            await deleteMemoryById(id);
+            await deleteMemoryById(activeCapsuleId, id);
             showToast('Memória removida.');
           } catch (err) {
             console.error('Erro ao excluir memória:', err);
@@ -1300,7 +1338,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       try {
-        await createMemory({
+        await createMemory(activeCapsuleId, {
           title: titleInput ? titleInput.value.trim() : '',
           date: dateInput ? dateInput.value : '',
           category: categoryInput ? categoryInput.value : 'Dia a Dia',
@@ -1345,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       try {
-        await saveCapsuleProfile({
+        await saveCapsuleProfile(activeCapsuleId, {
           name: nameInput ? nameInput.value.trim() : '',
           years: yearsInput ? yearsInput.value.trim() : '',
           subtitle: subtitleInput ? subtitleInput.value.trim() : '',

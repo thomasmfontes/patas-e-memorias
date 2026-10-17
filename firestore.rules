@@ -6,7 +6,21 @@ rules_version = '2';
 //
 // This security rules file assumes the following data structures:
 //
-// Collection: memories
+// Collection: capsules
+// Document ID: {capsuleId} (Unique NFC Tag ID / Pet Capsule Identifier)
+// Fields:
+//   - name: string (required, 1..120 chars) - Pet name
+//   - years: string (optional, 0..60 chars) - Life span / age years label
+//   - subtitle: string (optional, 0..200 chars) - Breed and personality subtitle
+//   - epitaph: string (optional, 0..1000 chars) - Memorial tribute quote
+//   - photo: string (optional, 0..900000 chars) - Hero portrait path or data URL
+//   - claimed: bool (optional) - NFC tag activation / claim status
+//   - adminPin: string (optional, 0..32 chars) - Capsule admin management PIN
+//   - createdAt: int | timestamp (optional, immutable if present) - Creation timestamp
+//   - updatedAt: int | timestamp (optional) - Last modification timestamp
+//   - updatedBy: string (optional, 1..128 chars) - Firebase Auth UID of the editor
+//
+// Subcollection: capsules/{capsuleId}/memories
 // Document ID: {memoryId}
 // Fields:
 //   - title: string (required, 1..200 chars) - Memory headline/title
@@ -19,17 +33,15 @@ rules_version = '2';
 //   - photo: string (optional, 0..900000 chars) - Asset URL path or Base64 data URL
 //   - updatedAt: int | timestamp (optional) - Last modification timestamp
 //
+// Legacy Collections (Preserved for backwards compatibility):
+//
+// Collection: memories
+// Document ID: {memoryId}
+// Fields: same schema as capsules/{capsuleId}/memories
+//
 // Collection: capsule
 // Document ID: {docId} (e.g., 'profile')
-// Fields:
-//   - name: string (required, 1..120 chars) - Pet name
-//   - years: string (optional, 0..60 chars) - Life span years label
-//   - subtitle: string (optional, 0..200 chars) - Breed and personality subtitle
-//   - epitaph: string (optional, 0..1000 chars) - Memorial tribute quote
-//   - photo: string (optional, 0..900000 chars) - Hero portrait path or data URL
-//   - createdAt: int | timestamp (optional, immutable if present) - Creation timestamp
-//   - updatedAt: int | timestamp (optional) - Last modification timestamp
-//   - updatedBy: string (optional, 1..128 chars) - Firebase Auth UID of the editor
+// Fields: same schema as capsules/{capsuleId}
 //
 // ===============================================================
 
@@ -92,6 +104,12 @@ service cloud.firestore {
          request.resource.data[field].size() <= maxLen);
     }
 
+    // Validate optional boolean
+    function isValidOptionalBool(field) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] is bool;
+    }
+
     // Validate required timestamp or positive epoch integer (ms)
     function isValidTimeField(field) {
       return (request.resource.data[field] is int && request.resource.data[field] > 0) ||
@@ -130,12 +148,14 @@ service cloud.firestore {
 
     function isValidCapsuleDoc(data) {
       return hasRequiredFields(['name']) &&
-        hasOnlyAllowedFields(['name', 'years', 'subtitle', 'epitaph', 'photo', 'createdAt', 'updatedAt', 'updatedBy']) &&
+        hasOnlyAllowedFields(['name', 'years', 'subtitle', 'epitaph', 'photo', 'claimed', 'adminPin', 'createdAt', 'updatedAt', 'updatedBy']) &&
         validStringLength('name', 1, 120) &&
         isValidOptionalString('years', 0, 60) &&
         isValidOptionalString('subtitle', 0, 200) &&
         isValidOptionalString('epitaph', 0, 1000) &&
         isValidOptionalString('photo', 0, 900000) &&
+        isValidOptionalBool('claimed') &&
+        isValidOptionalString('adminPin', 0, 32) &&
         isValidOptionalTimeField('createdAt') &&
         isValidOptionalTimeField('updatedAt') &&
         isValidOptionalString('updatedBy', 1, 128) &&
@@ -146,6 +166,37 @@ service cloud.firestore {
     // Collection Rules
     // ===============================================================
 
+    // Multi-Pet / Multi-Capsule NFC Model
+    match /capsules/{capsuleId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() &&
+        isValidCapsuleDoc(request.resource.data);
+
+      allow update: if isAuthenticated() &&
+        isValidCapsuleDoc(request.resource.data) &&
+        (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
+
+      allow delete: if false;
+
+      // Memories scoped to a specific pet capsule
+      match /memories/{memoryId} {
+        allow read: if isAuthenticated();
+
+        allow create: if isAuthenticated() &&
+          isValidMemory(request.resource.data) &&
+          uidUnchanged();
+
+        allow update: if isAuthenticated() &&
+          isValidMemory(request.resource.data) &&
+          uidNotModified() &&
+          request.resource.data.createdAt == resource.data.createdAt;
+
+        allow delete: if isAuthenticated();
+      }
+    }
+
+    // Legacy Single-Pet Collections (Backwards Compatibility)
     match /memories/{memoryId} {
       allow read: if isAuthenticated();
 

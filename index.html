@@ -36,9 +36,9 @@
       <!-- Profile Card -->
       <section class="card profile-card is-loading" id="profileCardSection">
         <button type="button" class="btn-edit-profile" id="btnEditProfile" aria-label="Editar informações do pet" title="Editar informações">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 20h9"></path>
-            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+            <path d="m15 5 4 4"></path>
           </svg>
         </button>
 
@@ -150,6 +150,23 @@
     <!-- RIGHT / MAIN COLUMN: Tabs & Content -->
     <main class="content-column">
       
+      <!-- NFC Activation Banner (Shown when tag is scanned for first time) -->
+      <div class="nfc-activation-banner" id="nfcActivationBanner" style="display: none;">
+        <div class="nfc-banner-badge-icon">🏷️</div>
+        <div class="nfc-banner-body">
+          <div class="nfc-banner-pretitle">Pote de Ração Conectado</div>
+          <h3 class="nfc-banner-title">Ative a Cápsula deste Pote!</h3>
+          <p class="nfc-banner-desc">Este pote de ração ainda não possui um pet vinculado. Cadastre o nome e a foto do seu companheiro para começar a guardar momentos eternos.</p>
+        </div>
+        <button type="button" class="btn-activate-pote" id="btnActivatePote">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Cadastrar Pet</span>
+        </button>
+      </div>
+
       <!-- Top Navigation Tabs -->
       <nav class="tabs-nav" aria-label="Navegação da cápsula">
         <button class="tab-item active" data-tab="historias">
@@ -493,7 +510,14 @@
   <div class="modal-backdrop" id="editProfileModal" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-head">
-        <h3 class="modal-heading">Dados do Companheiro</h3>
+        <div class="modal-head-titles">
+          <h3 class="modal-heading" id="profileModalHeading">Dados do Companheiro</h3>
+          <div class="pote-tag-id-pill" id="poteTagIdIndicator">
+            <span class="tag-pill-icon">🏷️</span>
+            <span class="tag-pill-label">Pote NFC:</span>
+            <code class="tag-pill-code" id="modalTagIdCode">bento</code>
+          </div>
+        </div>
         <button class="modal-close" id="closeProfileModalBtn" aria-label="Fechar Modal de Perfil">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>

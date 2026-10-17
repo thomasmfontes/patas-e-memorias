@@ -1,4 +1,4 @@
-// Firebase Configuration & Services for Patas & Memórias
+// Firebase Configuration & Services for Patas & Memórias • NFC Multi-Pet Edition
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
@@ -32,6 +32,65 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 /**
+ * Extracts and sanitizes the active capsule ID from the URL.
+ * Supports:
+ * - Query parameters: `?pet=rex`, `?p=pote-123`, `?c=luna`, `?pote=001`
+ * - Path parameters: `/p/rex` or `/pet/rex`
+ * Defaults to 'bento' if no parameter is provided.
+ */
+export function getCurrentCapsuleId() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramId =
+      urlParams.get('pet') ||
+      urlParams.get('p') ||
+      urlParams.get('c') ||
+      urlParams.get('pote');
+
+    if (paramId && paramId.trim()) {
+      return sanitizeCapsuleId(paramId);
+    }
+
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    if (
+      pathParts.length >= 2 &&
+      (pathParts[0].toLowerCase() === 'p' || pathParts[0].toLowerCase() === 'pet')
+    ) {
+      return sanitizeCapsuleId(pathParts[1]);
+    }
+  } catch (e) {
+    console.warn('Erro ao resolver capsuleId da URL:', e);
+  }
+
+  return 'bento';
+}
+
+/**
+ * Sanitizes a string for use as a Firestore document ID / NFC URL slug.
+ */
+export function sanitizeCapsuleId(str) {
+  if (!str) return 'bento';
+  return String(str)
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/[^a-z0-9_-]/g, '-')    // caracteres seguros
+    .replace(/-+/g, '-')             // remove duplicatas
+    .slice(0, 64) || 'bento';
+}
+
+/**
+ * Generates the clean direct NFC / Shareable URL for the given capsule ID.
+ */
+export function getCapsuleShareUrl(capsuleId) {
+  const origin = window.location.origin;
+  const path = window.location.pathname.replace(/\/p\/[^\/]+|\/pet\/[^\/]+/, '');
+  const id = sanitizeCapsuleId(capsuleId);
+  return `${origin}${path === '/' ? '' : path}/?pet=${encodeURIComponent(id)}`;
+}
+
+/**
  * Ensures the visitor is signed in via Firebase Anonymous Auth.
  * Resolves with the authenticated Firebase User.
  */
@@ -61,33 +120,140 @@ export function ensureAuthenticated() {
 }
 
 /**
- * Subscribes to real-time updates of the 'memories' collection in Cloud Firestore.
+ * Subscribes to real-time updates of the pet capsule document in Cloud Firestore.
+ * Supports the multi-pet `/capsules/{capsuleId}` collection with transparent
+ * fallback to legacy `/capsule/profile` for backwards compatibility with Bento.
  */
-export function subscribeToMemories(onUpdate, onError) {
-  const memoriesRef = collection(db, 'memories');
-  const q = query(memoriesRef, orderBy('createdAt', 'desc'));
+export function subscribeToCapsuleProfile(capsuleId, onUpdate, onError) {
+  const safeId = sanitizeCapsuleId(capsuleId);
+  const capsuleDocRef = doc(db, 'capsules', safeId);
 
   return onSnapshot(
-    q,
-    (snapshot) => {
-      const items = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      }));
-      onUpdate(items);
+    capsuleDocRef,
+    (docSnap) => {
+      if (docSnap.exists()) {
+        onUpdate({ id: docSnap.id, ...docSnap.data() });
+      } else if (safeId === 'bento') {
+        // Fallback transparent to legacy profile document for existing Bento capsule
+        const legacyRef = doc(db, 'capsule', 'profile');
+        onSnapshot(
+          legacyRef,
+          (legacySnap) => {
+            if (legacySnap.exists()) {
+              onUpdate({ id: 'bento', ...legacySnap.data() });
+            } else {
+              onUpdate(null);
+            }
+          },
+          (legacyErr) => {
+            console.error('Erro ao ler legado:', legacyErr);
+            onUpdate(null);
+          }
+        );
+      } else {
+        // Tag scanned for the first time; capsule not yet initialized
+        onUpdate(null);
+      }
     },
     (error) => {
-      console.error('Erro no listener de memórias do Firestore:', error);
+      console.error(`Erro ao escutar perfil da cápsula [${safeId}]:`, error);
       if (onError) onError(error);
     }
   );
 }
 
 /**
- * Creates a new memory document in Cloud Firestore.
+ * Saves or updates a pet profile document (`/capsules/{capsuleId}`).
  */
-export async function createMemory({ title, date, category, story, photo, isFavorite }) {
+export async function saveCapsuleProfile(capsuleId, { name, years, subtitle, epitaph, photo, adminPin }) {
   const user = await ensureAuthenticated();
+  const safeId = sanitizeCapsuleId(capsuleId);
+  const profileRef = doc(db, 'capsules', safeId);
+
+  const payload = {
+    name: String(name || '').trim(),
+    years: String(years || '').trim(),
+    subtitle: String(subtitle || '').trim(),
+    epitaph: String(epitaph || '').trim(),
+    photo: String(photo || '').trim(),
+    claimed: true,
+    updatedAt: Date.now(),
+    updatedBy: user.uid
+  };
+
+  if (adminPin && String(adminPin).trim()) {
+    payload.adminPin = String(adminPin).trim();
+  }
+
+  await setDoc(profileRef, payload, { merge: true });
+
+  // Keep legacy doc updated if Bento to preserve backward compatibility
+  if (safeId === 'bento') {
+    try {
+      const legacyRef = doc(db, 'capsule', 'profile');
+      await setDoc(legacyRef, payload, { merge: true });
+    } catch (e) {
+      console.warn('Sync legado opcional ignorado:', e);
+    }
+  }
+
+  return payload;
+}
+
+/**
+ * Subscribes to memories of a specific pet capsule (`/capsules/{capsuleId}/memories`).
+ * If 'bento', checks legacy collection `/memories` if subcollection is empty.
+ */
+export function subscribeToMemories(capsuleId, onUpdate, onError) {
+  const safeId = sanitizeCapsuleId(capsuleId);
+  const memoriesRef = collection(db, 'capsules', safeId, 'memories');
+  const q = query(memoriesRef, orderBy('createdAt', 'desc'));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      if (!snapshot.empty) {
+        const items = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          capsuleId: safeId,
+          ...docSnap.data()
+        }));
+        onUpdate(items);
+      } else if (safeId === 'bento') {
+        // Check legacy flat `/memories` collection for backward compatibility
+        const legacyRef = collection(db, 'memories');
+        const legacyQuery = query(legacyRef, orderBy('createdAt', 'desc'));
+        onSnapshot(
+          legacyQuery,
+          (legacySnap) => {
+            const legacyItems = legacySnap.docs.map((docSnap) => ({
+              id: docSnap.id,
+              capsuleId: 'bento',
+              ...docSnap.data()
+            }));
+            onUpdate(legacyItems);
+          },
+          (legacyErr) => {
+            if (onError) onError(legacyErr);
+          }
+        );
+      } else {
+        onUpdate([]);
+      }
+    },
+    (error) => {
+      console.error(`Erro ao escutar memórias de [${safeId}]:`, error);
+      if (onError) onError(error);
+    }
+  );
+}
+
+/**
+ * Creates a new memory document scoped to a pet capsule.
+ */
+export async function createMemory(capsuleId, { title, date, category, story, photo, isFavorite }) {
+  const user = await ensureAuthenticated();
+  const safeId = sanitizeCapsuleId(capsuleId);
   const now = Date.now();
 
   const payload = {
@@ -105,69 +271,57 @@ export async function createMemory({ title, date, category, story, photo, isFavo
     payload.photo = String(photo);
   }
 
-  const docRef = await addDoc(collection(db, 'memories'), payload);
-  return { id: docRef.id, ...payload };
+  const subColRef = collection(db, 'capsules', safeId, 'memories');
+  const docRef = await addDoc(subColRef, payload);
+  return { id: docRef.id, capsuleId: safeId, ...payload };
 }
 
 /**
  * Toggles or updates the favorite status of a memory in Cloud Firestore.
  */
-export async function toggleMemoryFavorite(memoryId, isFavorite) {
+export async function toggleMemoryFavorite(capsuleId, memoryId, isFavorite) {
   await ensureAuthenticated();
-  const memRef = doc(db, 'memories', memoryId);
-  await updateDoc(memRef, {
-    isFavorite: Boolean(isFavorite),
-    updatedAt: Date.now()
-  });
+  const safeId = sanitizeCapsuleId(capsuleId);
+
+  try {
+    const memRef = doc(db, 'capsules', safeId, 'memories', memoryId);
+    await updateDoc(memRef, {
+      isFavorite: Boolean(isFavorite),
+      updatedAt: Date.now()
+    });
+  } catch (err) {
+    // If it was from legacy bento collection
+    if (safeId === 'bento') {
+      const legacyDocRef = doc(db, 'memories', memoryId);
+      await updateDoc(legacyDocRef, {
+        isFavorite: Boolean(isFavorite),
+        updatedAt: Date.now()
+      });
+    } else {
+      throw err;
+    }
+  }
 }
 
 /**
  * Deletes a memory document from Cloud Firestore.
  */
-export async function deleteMemoryById(memoryId) {
+export async function deleteMemoryById(capsuleId, memoryId) {
   await ensureAuthenticated();
-  const memRef = doc(db, 'memories', memoryId);
-  await deleteDoc(memRef);
-}
+  const safeId = sanitizeCapsuleId(capsuleId);
 
-/**
- * Subscribes to the capsule profile document (`capsule/profile`) in Cloud Firestore.
- */
-export function subscribeToCapsuleProfile(onUpdate, onError) {
-  const profileRef = doc(db, 'capsule', 'profile');
-  return onSnapshot(
-    profileRef,
-    (docSnap) => {
-      if (docSnap.exists()) {
-        onUpdate(docSnap.data());
-      } else {
-        onUpdate(null);
-      }
-    },
-    (error) => {
-      console.error('Erro ao escutar perfil da cápsula no Firestore:', error);
-      if (onError) onError(error);
+  try {
+    const memRef = doc(db, 'capsules', safeId, 'memories', memoryId);
+    await deleteDoc(memRef);
+  } catch (err) {
+    // If it was from legacy bento collection
+    if (safeId === 'bento') {
+      const legacyDocRef = doc(db, 'memories', memoryId);
+      await deleteDoc(legacyDocRef);
+    } else {
+      throw err;
     }
-  );
-}
-
-/**
- * Saves or updates the pet profile document (`capsule/profile`) in Cloud Firestore.
- */
-export async function saveCapsuleProfile({ name, years, subtitle, epitaph, photo }) {
-  const user = await ensureAuthenticated();
-  const profileRef = doc(db, 'capsule', 'profile');
-  const payload = {
-    name: String(name || '').trim(),
-    years: String(years || '').trim(),
-    subtitle: String(subtitle || '').trim(),
-    epitaph: String(epitaph || '').trim(),
-    photo: String(photo || '').trim(),
-    updatedAt: Date.now(),
-    updatedBy: user.uid
-  };
-  await setDoc(profileRef, payload, { merge: true });
-  return payload;
+  }
 }
 
 /**
