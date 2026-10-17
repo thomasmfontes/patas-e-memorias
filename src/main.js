@@ -90,11 +90,6 @@ function renderCapsuleProfile() {
   const epitaphEl = document.getElementById('profilePetEpitaph');
   const brandTag = document.getElementById('brandTagText');
   const timelineTitle = document.getElementById('timelineHeaderTitle');
-  const nfcActivationBanner = document.getElementById('nfcActivationBanner');
-  const modalTagIdCode = document.getElementById('modalTagIdCode');
-  const profileModalHeading = document.getElementById('profileModalHeading');
-
-  if (modalTagIdCode) modalTagIdCode.textContent = activeCapsuleId;
 
   if (isLoadingProfile) {
     if (profileCard) profileCard.classList.add('is-loading');
@@ -104,44 +99,25 @@ function renderCapsuleProfile() {
   if (profileCard) profileCard.classList.remove('is-loading');
 
   if (!capsuleProfile) {
-    // Tag scanned for the first time or capsule not yet configured
     if (photoImg) photoImg.style.display = 'none';
     if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
+    if (nameEl) nameEl.textContent = 'Sua Cápsula';
+    if (yearsEl) yearsEl.textContent = 'Configure o perfil';
     if (dotEl) dotEl.style.display = 'none';
     if (subtitleEl) subtitleEl.textContent = '';
-    
-    if (activeCapsuleId === 'bento') {
-      if (nameEl) nameEl.textContent = 'Sua Cápsula';
-      if (yearsEl) yearsEl.textContent = 'Configure o perfil';
-      if (epitaphEl) {
-        epitaphEl.textContent = 'Personalize os dados do seu companheiro para eternizar cada lembrança com carinho.';
-      }
-      if (brandTag) brandTag.textContent = 'Cápsula Digital';
-      if (nfcActivationBanner) nfcActivationBanner.style.display = 'none';
-    } else {
-      if (nameEl) nameEl.textContent = 'Novo Pote Conectado';
-      if (yearsEl) yearsEl.textContent = 'Toque para ativar';
-      if (epitaphEl) {
-        epitaphEl.textContent = 'Este pote de ração está pronto para ser conectado ao seu pet. Toque em "Cadastrar Pet" para ativar a cápsula!';
-      }
-      if (brandTag) brandTag.textContent = `Pote #${activeCapsuleId}`;
-      if (nfcActivationBanner) nfcActivationBanner.style.display = 'flex';
+    if (epitaphEl) {
+      epitaphEl.textContent = 'Personalize os dados do seu companheiro para eternizar cada lembrança com carinho.';
     }
-
-    if (profileModalHeading) profileModalHeading.textContent = 'Ativar Cápsula do Pote';
+    if (brandTag) brandTag.textContent = 'Cápsula Digital';
     if (timelineTitle) timelineTitle.textContent = 'A Jornada';
-    document.title = `Patas & Memórias • Pote #${activeCapsuleId} 🐾`;
+    document.title = 'Patas & Memórias 🐾';
     return;
   }
-
-  // Capsule is configured
-  if (nfcActivationBanner) nfcActivationBanner.style.display = 'none';
-  if (profileModalHeading) profileModalHeading.textContent = 'Dados do Companheiro';
 
   const petName = capsuleProfile.name || 'Sua Cápsula';
   if (nameEl) nameEl.textContent = petName;
   if (brandTag) {
-    brandTag.textContent = capsuleProfile.name ? `Cápsula Digital • ${capsuleProfile.name}` : `Pote #${activeCapsuleId}`;
+    brandTag.textContent = capsuleProfile.name ? `Cápsula Digital • ${capsuleProfile.name}` : 'Cápsula Digital';
   }
   if (timelineTitle) timelineTitle.textContent = `A Jornada de ${petName}`;
   document.title = `Patas & Memórias • ${petName} 🐾`;
@@ -233,6 +209,7 @@ function renderFeed() {
   if (!container) return;
 
   if (isLoadingMemories) {
+    container.style.display = 'grid';
     if (emptyState) emptyState.style.display = 'none';
     container.innerHTML = `
       <article class="memory-card skeleton-memory-card" aria-hidden="true">
@@ -290,6 +267,7 @@ function renderFeed() {
 
   if (filtered.length === 0) {
     container.innerHTML = '';
+    container.style.display = 'none';
     if (emptyState) {
       emptyState.style.display = 'flex';
       const suggBox = emptyState.querySelector('.empty-suggestions');
@@ -309,6 +287,7 @@ function renderFeed() {
     return;
   }
 
+  container.style.display = 'grid';
   if (emptyState) emptyState.style.display = 'none';
 
   container.innerHTML = filtered.map(mem => {
@@ -860,14 +839,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderAll();
     showToast('Não foi possível conectar. Tente novamente mais tarde.');
     console.error('Erro de conexão:', err);
-  }
-
-  // NFC Activate Pote button click (For unclaimed tags)
-  const btnActivatePote = document.getElementById('btnActivatePote');
-  if (btnActivatePote) {
-    btnActivatePote.addEventListener('click', () => {
-      openProfileModal();
-    });
   }
 
   // Tab switching
