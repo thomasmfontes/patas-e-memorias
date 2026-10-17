@@ -14,6 +14,18 @@ import {
 // Active Pet Capsule Identifier resolved from NFC URL tag
 const activeCapsuleId = getCurrentCapsuleId();
 
+// Manter a barra de endereço sempre limpa e elegante (ex: /thor ao invés de ?pet=thor)
+try {
+  if (window.history && window.history.replaceState) {
+    const desiredPath = activeCapsuleId === 'bento' ? '/' : `/${encodeURIComponent(activeCapsuleId)}`;
+    if (window.location.search || (window.location.pathname !== desiredPath && (window.location.pathname.startsWith('/p/') || window.location.pathname.startsWith('/pet/')))) {
+      window.history.replaceState(null, '', desiredPath);
+    }
+  }
+} catch (e) {
+  // Ignora se estiver em iframes restritos
+}
+
 // App State (100% synchronized with Cloud Firestore)
 let memories = [];
 let capsuleProfile = null;
@@ -364,22 +376,31 @@ function renderGallery() {
   if (galleryPhotosList.length === 0) {
     grid.innerHTML = `
       <div class="empty-state-card gallery-empty-card" style="grid-column: 1 / -1;">
-        <div class="empty-icon-circle">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <div class="empty-seal">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3" ry="3"></rect>
             <circle cx="8.5" cy="8.5" r="1.5"></circle>
             <polyline points="21 15 16 10 5 21"></polyline>
           </svg>
         </div>
         <h3 class="empty-title">Nenhum retrato guardado ainda</h3>
         <p class="empty-desc">As fotos que você adicionar às histórias serão reunidas e organizadas aqui neste álbum.</p>
-        <button class="btn-create" id="btnEmptyGallery">
+        <button class="btn-create btn-create-elevated" id="btnEmptyGallery">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
           <span>Guardar Primeira Foto</span>
         </button>
+
+        <div class="empty-suggestions">
+          <span class="suggestions-label">Fotos para guardar:</span>
+          <div class="suggestion-chips">
+            <span class="sugg-chip" data-prompt="A soneca mais gostosa 😴">A soneca mais gostosa 😴</span>
+            <span class="sugg-chip" data-prompt="Passeio inesquecível no parque 🌲">Passeio no parque 🌲</span>
+            <span class="sugg-chip" data-prompt="O brinquedo favorito 🎾">O brinquedo favorito 🎾</span>
+          </div>
+        </div>
       </div>
     `;
     const btnEmptyGal = document.getElementById('btnEmptyGallery');
@@ -420,21 +441,30 @@ function renderTimeline() {
   if (sorted.length === 0) {
     container.innerHTML = `
       <div class="empty-state-card timeline-empty-card">
-        <div class="empty-icon-circle">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="empty-seal">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
         </div>
         <h3 class="empty-title">A história está pronta para começar</h3>
         <p class="empty-desc">Ao registrar memórias com datas, cada capítulo da vida do seu companheiro será desenhado cronologicamente aqui.</p>
-        <button class="btn-create" id="btnEmptyTimeline">
+        <button class="btn-create btn-create-elevated" id="btnEmptyTimeline">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
           <span>Adicionar Primeiro Marco</span>
         </button>
+
+        <div class="empty-suggestions">
+          <span class="suggestions-label">Marcos para a jornada:</span>
+          <div class="suggestion-chips">
+            <span class="sugg-chip" data-prompt="O dia da chegada em casa 🏡">O dia da chegada em casa 🏡</span>
+            <span class="sugg-chip" data-prompt="A primeira grande aventura 🐾">A primeira grande aventura 🐾</span>
+            <span class="sugg-chip" data-prompt="Aniversário inesquecível 🎂">Aniversário inesquecível 🎂</span>
+          </div>
+        </div>
       </div>
     `;
     const btnEmptyTime = document.getElementById('btnEmptyTimeline');
@@ -1075,17 +1105,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnFab) btnFab.addEventListener('click', openAddModal);
   if (btnEmpty) btnEmpty.addEventListener('click', openAddModal);
 
-  // Suggestion chips in empty state
-  document.querySelectorAll('.sugg-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const prompt = chip.getAttribute('data-prompt') || chip.textContent.trim();
-      openAddModal();
-      const inputTitle = document.getElementById('inputTitle');
-      if (inputTitle) {
-        inputTitle.value = prompt;
-        inputTitle.focus();
-      }
-    });
+  // Suggestion chips in empty state (delegated across all three tabs)
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest('.sugg-chip');
+    if (!chip) return;
+    const prompt = chip.getAttribute('data-prompt') || chip.textContent.trim();
+    openAddModal();
+    const inputTitle = document.getElementById('inputTitle');
+    if (inputTitle) {
+      inputTitle.value = prompt;
+      inputTitle.focus();
+    }
   });
 
   const closeModalBtn = document.getElementById('closeModalBtn');

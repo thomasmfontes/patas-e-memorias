@@ -45,18 +45,37 @@ export function getCurrentCapsuleId() {
       urlParams.get('pet') ||
       urlParams.get('p') ||
       urlParams.get('c') ||
-      urlParams.get('pote');
+      urlParams.get('pote') ||
+      urlParams.get('id');
 
     if (paramId && paramId.trim()) {
       return sanitizeCapsuleId(paramId);
     }
 
     const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const reservedWords = [
+      'index.html',
+      'assets',
+      'src',
+      'public',
+      'api',
+      'dist',
+      'favicon.ico',
+      'manifest.json',
+      'robots.txt'
+    ];
+
+    // Formato /pet/nome ou /p/nome
     if (
       pathParts.length >= 2 &&
       (pathParts[0].toLowerCase() === 'p' || pathParts[0].toLowerCase() === 'pet')
     ) {
       return sanitizeCapsuleId(pathParts[1]);
+    }
+
+    // Formato ultra-amigável direto na raiz: /nome-do-pet (ex: /thor, /luna, /bento)
+    if (pathParts.length === 1 && !reservedWords.includes(pathParts[0].toLowerCase())) {
+      return sanitizeCapsuleId(pathParts[0]);
     }
   } catch (e) {
     console.warn('Erro ao resolver capsuleId da URL:', e);
@@ -82,12 +101,12 @@ export function sanitizeCapsuleId(str) {
 
 /**
  * Generates the clean direct NFC / Shareable URL for the given capsule ID.
+ * Produces clean friendly URLs: e.g. https://patas.com.br/thor or https://patas.com.br/luna
  */
 export function getCapsuleShareUrl(capsuleId) {
   const origin = window.location.origin;
-  const path = window.location.pathname.replace(/\/p\/[^\/]+|\/pet\/[^\/]+/, '');
   const id = sanitizeCapsuleId(capsuleId);
-  return `${origin}${path === '/' ? '' : path}/?pet=${encodeURIComponent(id)}`;
+  return id === 'bento' ? `${origin}/` : `${origin}/${encodeURIComponent(id)}`;
 }
 
 /**
