@@ -1,0 +1,182 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: memories
+// Document ID: {memoryId}
+// Fields:
+//   - title: string (required, 1..200 chars) - Memory headline/title
+//   - date: string (required, 1..30 chars) - ISO date string (YYYY-MM-DD)
+//   - category: string (required, 1..60 chars) - Memory category label
+//   - story: string (required, 1..5000 chars) - Narrative text of the memory
+//   - isFavorite: bool (required) - Whether the memory is marked as favorite
+//   - createdAt: int | timestamp (required, immutable) - Creation timestamp
+//   - authorId: string (required, 1..128 chars, immutable) - Creator's Firebase Auth UID
+//   - photo: string (optional, 0..900000 chars) - Asset URL path or Base64 data URL
+//   - updatedAt: int | timestamp (optional) - Last modification timestamp
+//
+// Collection: capsule
+// Document ID: {docId} (e.g., 'profile')
+// Fields:
+//   - name: string (required, 1..120 chars) - Pet name
+//   - years: string (optional, 0..60 chars) - Life span years label
+//   - subtitle: string (optional, 0..200 chars) - Breed and personality subtitle
+//   - epitaph: string (optional, 0..1000 chars) - Memorial tribute quote
+//   - photo: string (optional, 0..900000 chars) - Hero portrait path or data URL
+//   - createdAt: int | timestamp (optional, immutable if present) - Creation timestamp
+//   - updatedAt: int | timestamp (optional) - Last modification timestamp
+//   - updatedBy: string (optional, 1..128 chars) - Firebase Auth UID of the editor
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated (including Firebase Anonymous Auth)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the resource by explicit userId
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if user is owner based on document's authorId field
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.authorId;
+    }
+
+    // Verify authorId matches the authenticated user on create
+    function uidUnchanged() {
+      return ('authorId' in request.resource.data) &&
+        request.resource.data.authorId == request.auth.uid;
+    }
+
+    // Ensure authorId field is not modified on update
+    function uidNotModified() {
+      return ('authorId' in request.resource.data) &&
+        request.resource.data.authorId == resource.data.authorId;
+    }
+
+    // Validate required fields exist on the resulting document
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate that the document contains only the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate string type and length bounds
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate optional string (if present, must be string and within length bounds)
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+        (request.resource.data[field] is string &&
+         request.resource.data[field].size() >= minLen &&
+         request.resource.data[field].size() <= maxLen);
+    }
+
+    // Validate required timestamp or positive epoch integer (ms)
+    function isValidTimeField(field) {
+      return (request.resource.data[field] is int && request.resource.data[field] > 0) ||
+        request.resource.data[field] is timestamp;
+    }
+
+    // Validate optional timestamp or positive epoch integer (ms)
+    function isValidOptionalTimeField(field) {
+      return !(field in request.resource.data) ||
+        (request.resource.data[field] is int && request.resource.data[field] > 0) ||
+        request.resource.data[field] is timestamp;
+    }
+
+    // Validate that immutable fields have not been modified
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators (Used in BOTH create and update)
+    // ===============================================================
+
+    function isValidMemory(data) {
+      return hasRequiredFields(['title', 'date', 'category', 'story', 'isFavorite', 'createdAt', 'authorId']) &&
+        hasOnlyAllowedFields(['title', 'date', 'category', 'story', 'photo', 'isFavorite', 'createdAt', 'updatedAt', 'authorId']) &&
+        validStringLength('title', 1, 200) &&
+        validStringLength('date', 1, 30) &&
+        validStringLength('category', 1, 60) &&
+        validStringLength('story', 1, 5000) &&
+        data.isFavorite is bool &&
+        isValidTimeField('createdAt') &&
+        validStringLength('authorId', 1, 128) &&
+        isValidOptionalString('photo', 0, 900000) &&
+        isValidOptionalTimeField('updatedAt');
+    }
+
+    function isValidCapsuleDoc(data) {
+      return hasRequiredFields(['name']) &&
+        hasOnlyAllowedFields(['name', 'years', 'subtitle', 'epitaph', 'photo', 'createdAt', 'updatedAt', 'updatedBy']) &&
+        validStringLength('name', 1, 120) &&
+        isValidOptionalString('years', 0, 60) &&
+        isValidOptionalString('subtitle', 0, 200) &&
+        isValidOptionalString('epitaph', 0, 1000) &&
+        isValidOptionalString('photo', 0, 900000) &&
+        isValidOptionalTimeField('createdAt') &&
+        isValidOptionalTimeField('updatedAt') &&
+        isValidOptionalString('updatedBy', 1, 128) &&
+        (!('updatedBy' in data) || data.updatedBy == request.auth.uid);
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    match /memories/{memoryId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() &&
+        isValidMemory(request.resource.data) &&
+        uidUnchanged();
+
+      allow update: if isAuthenticated() &&
+        isValidMemory(request.resource.data) &&
+        uidNotModified() &&
+        request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if isAuthenticated();
+    }
+
+    match /capsule/{docId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() &&
+        isValidCapsuleDoc(request.resource.data);
+
+      allow update: if isAuthenticated() &&
+        isValidCapsuleDoc(request.resource.data) &&
+        (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
+
+      allow delete: if false;
+    }
+
+    // Default deny on all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

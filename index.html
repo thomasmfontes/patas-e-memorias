@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Patas & Memórias 🐾</title>
+  <meta name="description" content="Cápsula digital de memórias afetivas. Guarde fotos, histórias e momentos eternos." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239c422b'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <!-- Header Bar -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-paw">
+          <span class="brand-paw-icon" aria-hidden="true"></span>
+        </div>
+        <div class="brand-text-block">
+          <h1 class="brand-name">Patas & Memórias</h1>
+          <span class="brand-tag" id="brandTagText">Cápsula Digital</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Responsive Container -->
+  <div class="app-container">
+    
+    <!-- LEFT COLUMN: Profile & Quick Filters (Sticky on Desktop) -->
+    <aside class="sidebar-column">
+      
+      <!-- Profile Card -->
+      <section class="card profile-card">
+        <div class="tribute-photo-wrap" id="profilePhotoWrap" title="Clique para personalizar foto">
+          <img id="profilePhotoImg" src="" alt="Foto do Pet" class="tribute-photo" style="display: none;" />
+          <div id="profilePhotoPlaceholder" class="tribute-photo-placeholder">🐾</div>
+        </div>
+
+        <div class="profile-info">
+          <h2 class="pet-title" id="profilePetName">Sua Cápsula</h2>
+          <div class="pet-lifespan" id="profileLifespanRow">
+            <span class="years" id="profilePetYears">Configure o perfil</span>
+            <span class="dot" id="profileLifespanDot" style="display: none;">•</span>
+            <span class="golden" id="profilePetSubtitle"></span>
+          </div>
+
+          <p class="profile-epitaph" id="profilePetEpitaph">
+            Personalize os dados do seu companheiro para eternizar cada lembrança com carinho.
+          </p>
+        </div>
+
+        <button type="button" class="btn-edit-profile" id="btnEditProfile">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <span>Editar Informações</span>
+        </button>
+
+        <!-- Dynamic Counter Badges -->
+        <div class="stat-pills-row">
+          <div class="stat-pill">
+            <span class="stat-val" id="statMemoriesCount">0</span>
+            <span class="stat-lbl">Histórias</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-val" id="statPhotosCount">0</span>
+            <span class="stat-lbl">Fotos</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-val" id="statFavoritesCount">0</span>
+            <span class="stat-lbl">
+              <span>Favoritas</span>
+              <svg class="chip-heart" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <!-- Sidebar CTA button for Desktop -->
+        <button class="btn-sidebar-create" id="btnOpenModalSidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Eternizar Nova Memória</span>
+        </button>
+      </section>
+
+      <!-- Search & Filters Card (Desktop Sidebar Integration) -->
+      <section class="card filters-card desktop-filters">
+        <h3 class="sidebar-card-title">Explorar Recordações</h3>
+        
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Buscar por palavra ou título..." aria-label="Buscar memórias por texto" />
+          <button id="clearSearchBtn" class="btn-clear-search" style="display: none;" aria-label="Limpar pesquisa">✕</button>
+        </div>
+
+        <div class="categories-list" id="categoryChips">
+          <button class="cat-pill active" data-category="all">
+            <span>Todas as Memórias</span>
+            <span class="cat-count" id="countAll">0</span>
+          </button>
+          <button class="cat-pill" data-category="favoritas">
+            <span class="cat-pill-inner">
+              <svg class="chip-heart" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              <span>Favoritas</span>
+            </span>
+            <span class="cat-count" id="countFav">0</span>
+          </button>
+          <button class="cat-pill" data-category="Filhote">
+            <span>Filhote</span>
+            <span class="cat-count" id="countFilhote">0</span>
+          </button>
+          <button class="cat-pill" data-category="Brincadeiras">
+            <span>Brincadeiras</span>
+            <span class="cat-count" id="countBrincadeiras">0</span>
+          </button>
+          <button class="cat-pill" data-category="Viagem">
+            <span>Viagens</span>
+            <span class="cat-count" id="countViagem">0</span>
+          </button>
+          <button class="cat-pill" data-category="Dia a Dia">
+            <span>Dia a Dia</span>
+            <span class="cat-count" id="countDia">0</span>
+          </button>
+          <button class="cat-pill" data-category="Soneca">
+            <span>Soneca</span>
+            <span class="cat-count" id="countSoneca">0</span>
+          </button>
+          <button class="cat-pill" data-category="Família">
+            <span>Família</span>
+            <span class="cat-count" id="countFamilia">0</span>
+          </button>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- RIGHT / MAIN COLUMN: Tabs & Content -->
+    <main class="content-column">
+      
+      <!-- Top Navigation Tabs -->
+      <nav class="tabs-nav" aria-label="Navegação da cápsula">
+        <button class="tab-item active" data-tab="historias">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span>Histórias</span>
+        </button>
+        
+        <button class="tab-item" data-tab="galeria">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <span>Galeria</span>
+        </button>
+
+        <button class="tab-item" data-tab="timeline">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Linha do Tempo</span>
+        </button>
+      </nav>
+
+      <!-- TAB 1: HISTÓRIAS (FEED) -->
+      <section class="tab-pane active" id="paneHistorias">
+        
+        <!-- Mobile Search Bar (Only shown on mobile within Histórias) -->
+        <div class="mobile-search-wrapper">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="mobileSearchInput" placeholder="Buscar nas lembranças..." aria-label="Buscar memórias por texto no celular" />
+            <button id="clearMobileSearchBtn" class="btn-clear-search" style="display: none;" aria-label="Limpar pesquisa móvel">✕</button>
+          </div>
+
+          <div class="mobile-cat-scroll" id="mobileCategoryChips">
+            <button class="mobile-cat-pill active" data-category="all">Todas</button>
+            <button class="mobile-cat-pill" data-category="favoritas">
+              <svg class="chip-heart" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              <span>Favoritas</span>
+            </button>
+            <button class="mobile-cat-pill" data-category="Filhote">Filhote</button>
+            <button class="mobile-cat-pill" data-category="Brincadeiras">Brincadeiras</button>
+            <button class="mobile-cat-pill" data-category="Viagem">Viagens</button>
+            <button class="mobile-cat-pill" data-category="Dia a Dia">Dia a Dia</button>
+            <button class="mobile-cat-pill" data-category="Soneca">Soneca</button>
+            <button class="mobile-cat-pill" data-category="Família">Família</button>
+          </div>
+        </div>
+
+        <div class="memories-feed" id="memoriesFeed">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Empty State Card -->
+        <div class="empty-state-card" id="emptyState" style="display: none;">
+          <div class="empty-seal">
+            <span class="empty-seal-paw"></span>
+          </div>
+          <h3 class="empty-title" id="emptyStateTitle">Cápsula de Memórias</h3>
+          <p class="empty-desc" id="emptyStateDesc">
+            Este espaço é dedicado a eternizar cada momento inesquecível ao lado do seu companheiro.
+          </p>
+          <button class="btn-create btn-create-elevated" id="btnEmptyCreate">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Eternizar Primeira Lembrança</span>
+          </button>
+
+          <div class="empty-suggestions">
+            <span class="suggestions-label">Ideias para começar:</span>
+            <div class="suggestion-chips">
+              <span class="sugg-chip" data-prompt="O primeiro dia em casa 🏡">O primeiro dia em casa 🏡</span>
+              <span class="sugg-chip" data-prompt="O brinquedo favorito 🎾">O brinquedo favorito 🎾</span>
+              <span class="sugg-chip" data-prompt="Um passeio inesquecível 🌲">Um passeio inesquecível 🌲</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: GALERIA DE FOTOS -->
+      <section class="tab-pane" id="paneGaleria">
+        <div class="gallery-toolbar">
+          <div class="gallery-header-row">
+            <h3 class="gallery-title">Álbum Fotográfico</h3>
+            <span class="gallery-badge-count" id="galleryCountTag">0 fotos</span>
+          </div>
+          <p class="gallery-subtitle">Cada olhar, cada passeio e cada soneca guardados para sempre.</p>
+        </div>
+
+        <div class="gallery-grid" id="galleryGrid">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 3: LINHA DO TEMPO -->
+      <section class="tab-pane" id="paneTimeline">
+        <div class="timeline-header-card">
+          <h3 class="timeline-title" id="timelineHeaderTitle">A Jornada</h3>
+          <p class="timeline-subtitle" id="timelineHeaderSubtitle">Os capítulos marcantes guardados em ordem cronológica.</p>
+        </div>
+
+        <div class="timeline-flow" id="timelineContainer">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+    </main>
+
+  </div> <!-- /app-container -->
+
+  <!-- Floating Mobile Action Button -->
+  <button class="fab-create" id="btnFabCreate" aria-label="Criar Nova Memória">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+  </button>
+
+  <!-- MODAL: NOVA MEMÓRIA -->
+  <div class="modal-backdrop" id="addMemoryModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-heading">Eternizar um Instante</h3>
+        <button class="modal-close" id="closeModalBtn" aria-label="Fechar Modal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form class="modal-body" id="memoryForm">
+        
+        <!-- Photo Uploader with Rich Preview & Controls -->
+        <div class="form-field">
+          <label class="form-label">
+            <span>Fotografia da Memória</span>
+            <span class="label-optional">Opcional</span>
+          </label>
+          <div class="upload-dropzone" id="photoUploadArea" role="button" tabindex="0" aria-label="Adicionar fotografia da memória">
+            <div class="upload-preview-wrap" id="photoPreviewWrap" style="display: none;">
+              <img id="formPhotoPreview" src="" alt="Prévia da foto selecionada" class="upload-preview" />
+              <div class="upload-overlay-actions">
+                <button type="button" class="btn-upload-action change" id="btnChangePhoto" aria-label="Trocar fotografia">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                  <span>Trocar</span>
+                </button>
+                <button type="button" class="btn-upload-action remove" id="btnRemovePhoto" aria-label="Remover fotografia">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  <span>Remover</span>
+                </button>
+              </div>
+            </div>
+            
+            <div class="upload-instructions" id="photoUploadInstructions">
+              <div class="upload-icon-circle">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+              <strong id="uploadInstructionTitle">Adicionar Foto do Momento</strong>
+              <span>Toque para tirar uma foto ou escolher da galeria</span>
+            </div>
+            <input type="file" id="photoFileInput" accept="image/*,text/plain" class="file-hidden" aria-label="Fotografia da memória" />
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="form-field">
+          <label for="inputTitle" class="form-label">
+            <span class="label-text">Título da Lembrança <span class="required-star">*</span></span>
+          </label>
+          <div class="input-wrap">
+            <input type="text" id="inputTitle" required maxlength="200" placeholder="Ex: O dia em que ele roubou a melancia 🍉" class="form-input" autocomplete="off" />
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div class="form-field">
+          <label for="inputDate" class="form-label">
+            <span class="label-text">Data do Acontecido <span class="required-star">*</span></span>
+          </label>
+          <div class="input-wrap">
+            <input type="date" id="inputDate" required class="form-input form-input-date" />
+          </div>
+        </div>
+
+        <!-- Categoria: Apenas Escolha Rápida por Pílulas -->
+        <div class="form-field">
+          <label class="form-label">
+            <span class="label-text">Categoria</span>
+          </label>
+          <div class="category-pill-group" id="formCategoryChips">
+            <button type="button" class="form-cat-pill active" data-category="Dia a Dia">☀️ Dia a Dia</button>
+            <button type="button" class="form-cat-pill" data-category="Filhote">🍼 Filhote</button>
+            <button type="button" class="form-cat-pill" data-category="Brincadeiras">🎾 Brincadeiras</button>
+            <button type="button" class="form-cat-pill" data-category="Viagem">🚗 Viagem</button>
+            <button type="button" class="form-cat-pill" data-category="Soneca">💤 Soneca</button>
+            <button type="button" class="form-cat-pill" data-category="Família">🏡 Família</button>
+            <button type="button" class="form-cat-pill" data-category="Memória Eterna">🕊️ Memória Eterna</button>
+          </div>
+          <!-- Input oculto para armazenar a categoria selecionada -->
+          <input type="hidden" id="inputCategory" value="Dia a Dia" />
+        </div>
+
+        <!-- Story / Text with Character Counter placed below textarea -->
+        <div class="form-field">
+          <label for="inputStory" class="form-label">
+            <span class="label-text">A História / O que você sentiu <span class="required-star">*</span></span>
+          </label>
+          <textarea id="inputStory" rows="4" required maxlength="5000" placeholder="Escreva os detalhes, o carinho e o que tornou esse instante inesquecível..." class="form-input form-textarea"></textarea>
+          <div class="form-field-hint">
+            <span class="char-count" id="storyCharCount">0 / 5000</span>
+          </div>
+        </div>
+
+        <!-- Premium Interactive Favorite Card -->
+        <div class="form-field">
+          <label class="toggle-card" for="inputFavorite">
+            <div class="toggle-card-left">
+              <div class="toggle-icon-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <div class="toggle-card-text">
+                <strong class="toggle-title">Marcar como Lembrança Favorita</strong>
+                <span class="toggle-desc">Destacar com selo de honra e exibir com carinho</span>
+              </div>
+            </div>
+            <div class="switch-box">
+              <input type="checkbox" id="inputFavorite" class="switch-input" />
+              <span class="switch-slider"></span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Modal Sticky Footer Actions -->
+        <div class="modal-foot">
+          <button type="button" class="btn-cancel" id="cancelFormBtn">Cancelar</button>
+          <button type="submit" class="btn-save" id="btnSubmitMemory">
+            <svg class="btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display: none;">
+              <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10"></path>
+            </svg>
+            <span class="btn-label-text">Eternizar na Cápsula</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIGURAR PERFIL DO PET -->
+  <div class="modal-backdrop" id="editProfileModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-heading">Dados do Companheiro</h3>
+        <button class="modal-close" id="closeProfileModalBtn" aria-label="Fechar Modal de Perfil">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form class="modal-body" id="profileForm">
+        <!-- Profile Photo Uploader -->
+        <div class="form-field">
+          <label class="form-label">
+            <span>Foto de Capa do Perfil</span>
+            <span class="label-optional">Opcional</span>
+          </label>
+          <div class="upload-dropzone upload-profile-dropzone" id="profilePhotoUploadArea" role="button" tabindex="0" aria-label="Escolher foto de capa do perfil">
+            <div class="upload-preview-wrap" id="profilePhotoPreviewWrap" style="display: none;">
+              <img id="profileFormPhotoPreview" src="" alt="Prévia da foto de perfil" class="upload-preview profile-preview-img" />
+              <div class="upload-overlay-actions">
+                <button type="button" class="btn-upload-action change" id="btnChangeProfilePhoto" aria-label="Trocar foto de perfil">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                  <span>Trocar</span>
+                </button>
+                <button type="button" class="btn-upload-action remove" id="btnRemoveProfilePhoto" aria-label="Remover foto de perfil">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  <span>Remover</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="upload-instructions" id="profilePhotoUploadInstructions">
+              <div class="upload-icon-circle">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <strong>Escolher Foto do Companheiro</strong>
+              <span>Toque para tirar uma foto ou escolher da galeria</span>
+            </div>
+            <input type="file" id="profilePhotoFileInput" accept="image/*,text/plain" class="file-hidden" aria-label="Escolher foto do perfil" />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="inputPetName" class="form-label">
+            <span class="label-text">Nome do Companheiro <span class="required-star">*</span></span>
+          </label>
+          <div class="input-wrap">
+            <input type="text" id="inputPetName" required maxlength="80" placeholder="Ex: Bento, Mel, Thor..." class="form-input" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="inputPetYears" class="form-label">
+              <span class="label-text">Período / Anos</span>
+              <span class="label-optional">Opcional</span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="inputPetYears" maxlength="40" placeholder="Ex: 2014 — 2024" class="form-input" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="inputPetSubtitle" class="form-label">
+              <span class="label-text">Subtítulo Afetivo</span>
+              <span class="label-optional">Opcional</span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="inputPetSubtitle" maxlength="60" placeholder="Ex: 10 anos de puro amor" class="form-input" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="inputPetEpitaph" class="form-label">
+            <span class="label-text">Frase ou Homenagem Especial</span>
+            <span class="label-optional">Opcional</span>
+          </label>
+          <textarea id="inputPetEpitaph" rows="3" maxlength="500" placeholder="Ex: Ele não ocupava só o espaço do tapete; ocupava todos os silêncios da casa com afeto..." class="form-input form-textarea"></textarea>
+          <div class="form-field-hint">
+            <span class="char-count" id="epitaphCharCount">0 / 500</span>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" class="btn-cancel" id="cancelProfileFormBtn">Cancelar</button>
+          <button type="submit" class="btn-save" id="btnSubmitProfile">
+            <svg class="btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display: none;">
+              <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10"></path>
+            </svg>
+            <span class="btn-label-text">Salvar Perfil</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX COM CARROSSEL DESLIZÁVEL -->
+  <div class="lightbox" id="lightboxModal" aria-hidden="true">
+    <!-- Topbar: Contador à esquerda e botão Fechar perfeitamente centralizado à direita -->
+    <div class="lightbox-topbar">
+      <div class="lightbox-counter-badge" id="lightboxCounter">1 de 1</div>
+      <button class="lightbox-close" id="lightboxCloseBtn" aria-label="Fechar Foto">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="lightbox-center">
+      <div class="lightbox-carousel" id="lightboxCarousel">
+        <div class="lightbox-track" id="lightboxTrack">
+          <!-- Slides gerados dinamicamente -->
+        </div>
+      </div>
+
+      <div class="carousel-dots" id="carouselDots"></div>
+
+      <div class="lightbox-meta">
+        <div class="lightbox-meta-header">
+          <span class="lightbox-tag" id="lightboxCategory"></span>
+          <span class="lightbox-meta-sep">•</span>
+          <span class="lightbox-date" id="lightboxDate"></span>
+        </div>
+        <h4 class="lightbox-title" id="lightboxTitle"></h4>
+        <p class="lightbox-story" id="lightboxCaption"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMAÇÃO ELEGANTE (SUBSTITUI WINDOW.ALERT / CONFIRM) -->
+  <div class="modal-backdrop confirm-backdrop" id="confirmModal" aria-hidden="true">
+    <div class="modal-card confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="confirm-icon-wrap" id="confirmIconWrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+      </div>
+      <h3 class="confirm-title" id="confirmTitle">Excluir Memória?</h3>
+      <p class="confirm-message" id="confirmMessage">Esta lembrança será removida permanentemente da cápsula.</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn-cancel confirm-btn-cancel" id="confirmCancelBtn">Cancelar</button>
+        <button type="button" class="btn-confirm-action" id="confirmActionBtn">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST FEEDBACK -->
+  <div class="toast" id="toastNotice" role="alert">
+    <span id="toastMessage">Lembrança guardada com sucesso!</span>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
