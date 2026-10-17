@@ -93,6 +93,31 @@ body.modal-open {
   gap: 12px;
 }
 
+.brand-logo-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(156, 66, 43, 0.12);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+  background: #fbf6f0;
+}
+
+.brand:hover .brand-logo-wrap {
+  transform: scale(1.05);
+}
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .brand-paw {
   width: 42px;
   height: 42px;
@@ -142,6 +167,10 @@ body.modal-open {
 @media (max-width: 480px) {
   .header-inner {
     padding: 10px 16px;
+  }
+  .brand-logo-wrap {
+    width: 38px;
+    height: 38px;
   }
   .brand-name {
     font-size: 18.5px;
@@ -2856,4 +2885,326 @@ body.modal-open {
   border-radius: 6px;
   margin-bottom: 10px;
 }
+
+/* ------------------------------------------------------------- */
+/* PET SWITCHER (SELETOR RÁPIDO DE PETS)                         */
+/* ------------------------------------------------------------- */
+
+.pet-switcher-container {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+}
+
+.btn-pet-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(156, 66, 43, 0.07);
+  border: 1px solid rgba(156, 66, 43, 0.22);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  outline: none;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: middle;
+  transition: 
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.25s ease,
+    max-width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    padding 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    gap 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-pet-switcher:hover:not(.is-loading),
+.btn-pet-switcher.open {
+  background: rgba(156, 66, 43, 0.12);
+  border-color: rgba(156, 66, 43, 0.35);
+  box-shadow: 0 2px 10px rgba(156, 66, 43, 0.08);
+}
+
+/* Estado de carregamento: apenas o ícone circular, sem texto e sem chevron */
+.btn-pet-switcher.is-loading {
+  max-width: 36px;
+  padding: 3px;
+  gap: 0;
+  cursor: default;
+  border-color: rgba(156, 66, 43, 0.18);
+  background: rgba(156, 66, 43, 0.05);
+}
+
+.btn-pet-switcher.is-loading .switcher-pet-name {
+  max-width: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+.btn-pet-switcher.is-loading .switcher-chevron {
+  max-width: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  transform: scale(0.4);
+  pointer-events: none;
+}
+
+/* Estado carregado: transição suave revelando o nome e a setinha */
+.btn-pet-switcher:not(.is-loading),
+.btn-pet-switcher.is-loaded {
+  max-width: 240px;
+  padding: 4px 12px 4px 5px;
+  gap: 8px;
+}
+
+.switcher-avatar-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(156, 66, 43, 0.12);
+  border: 1px solid rgba(156, 66, 43, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  transition: transform 0.25s ease;
+}
+
+.switcher-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.switcher-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--primary);
+}
+
+.switcher-fallback-svg,
+.pet-fallback-svg {
+  display: block;
+  color: var(--primary);
+}
+
+.switcher-logo-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.switcher-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.switcher-pet-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--primary);
+  max-width: 130px;
+  opacity: 1;
+  transform: translateX(0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  transition: 
+    opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.08s,
+    max-width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
+}
+
+.switcher-chevron {
+  color: var(--primary);
+  max-width: 14px;
+  opacity: 1;
+  transform: scale(1);
+  transition: 
+    opacity 0.35s ease 0.12s,
+    max-width 0.4s ease,
+    transform 0.22s ease;
+  flex-shrink: 0;
+}
+
+.btn-pet-switcher.open .switcher-chevron {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.pet-switcher-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 270px;
+  background: #ffffff;
+  border: 1px solid var(--border-delicate);
+  border-radius: var(--radius-md);
+  box-shadow: 0 14px 36px rgba(70, 40, 20, 0.16), 0 2px 8px rgba(70, 40, 20, 0.06);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top right;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pet-switcher-dropdown.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.dropdown-header {
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid rgba(140, 95, 60, 0.08);
+}
+
+.dropdown-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.dropdown-pets-list {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown-pet-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-decoration: none;
+  color: inherit;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-pet-item:hover {
+  background: var(--surface-alt);
+}
+
+.dropdown-pet-item.active {
+  background: rgba(156, 66, 43, 0.07);
+}
+
+.pet-item-avatar-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(156, 66, 43, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pet-item-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pet-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-item-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-pet-item.active .pet-item-name {
+  color: var(--primary);
+}
+
+.pet-item-subtitle {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pet-item-check {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.dropdown-footer {
+  padding: 6px;
+  border-top: 1px solid rgba(140, 95, 60, 0.08);
+  background: #fdfaf6;
+}
+
+.btn-dropdown-add-pet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px dashed rgba(156, 66, 43, 0.35);
+  border-radius: var(--radius-sm);
+  color: var(--primary);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-dropdown-add-pet:hover {
+  background: rgba(156, 66, 43, 0.08);
+  border-color: var(--primary);
+}
+
+@media (max-width: 480px) {
+  .switcher-pet-name {
+    max-width: 80px;
+    font-size: 12.5px;
+  }
+  .pet-switcher-dropdown {
+    width: 250px;
+    right: -4px;
+  }
+}
+
 

@@ -13,6 +13,8 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  getDoc,
+  getDocs,
   onSnapshot,
   query,
   orderBy
@@ -107,6 +109,63 @@ export function getCapsuleShareUrl(capsuleId) {
   const origin = window.location.origin;
   const id = sanitizeCapsuleId(capsuleId);
   return id === 'bento' ? `${origin}/` : `${origin}/${encodeURIComponent(id)}`;
+}
+
+/**
+ * Fetches all registered pet capsules for the quick pet switcher.
+ * Reads from localStorage cache immediately and syncs with Cloud Firestore.
+ */
+export async function getRegisteredPets() {
+  const petsMap = new Map();
+
+  // Instant response from local cache
+  try {
+    const cached = JSON.parse(localStorage.getItem('cached_pets_list') || '[]');
+    if (Array.isArray(cached)) {
+      cached.forEach(p => {
+        if (p && p.id) petsMap.set(p.id, p);
+      });
+    }
+  } catch (e) {}
+
+  try {
+    await ensureAuthenticated();
+    const snap = await getDocs(collection(db, 'capsules'));
+    snap.docs.forEach(docSnap => {
+      const data = docSnap.data();
+      petsMap.set(docSnap.id, {
+        id: docSnap.id,
+        name: data.name || docSnap.id,
+        photo: data.photo || '',
+        subtitle: data.subtitle || data.years || ''
+      });
+    });
+
+    // Check legacy Bento doc if not already present
+    if (!petsMap.has('bento')) {
+      try {
+        const legacyDoc = await getDoc(doc(db, 'capsule', 'profile'));
+        if (legacyDoc.exists()) {
+          const lData = legacyDoc.data();
+          petsMap.set('bento', {
+            id: 'bento',
+            name: lData.name || 'Bento',
+            photo: lData.photo || '',
+            subtitle: lData.subtitle || lData.years || ''
+          });
+        }
+      } catch (err) {}
+    }
+  } catch (err) {
+    console.warn('Consulta a cápsulas no Firestore:', err);
+  }
+
+  const list = Array.from(petsMap.values());
+  try {
+    localStorage.setItem('cached_pets_list', JSON.stringify(list));
+  } catch (e) {}
+
+  return list;
 }
 
 /**
@@ -215,6 +274,21 @@ export async function saveCapsuleProfile(capsuleId, { name, years, subtitle, epi
       console.warn('Sync legado opcional ignorado:', e);
     }
   }
+
+  // Update local cache for immediate switcher reactivity
+  try {
+    const cached = JSON.parse(localStorage.getItem('cached_pets_list') || '[]');
+    const idx = cached.findIndex(p => p && p.id === safeId);
+    const item = {
+      id: safeId,
+      name: payload.name,
+      photo: payload.photo,
+      subtitle: payload.subtitle || payload.years
+    };
+    if (idx >= 0) cached[idx] = item;
+    else cached.push(item);
+    localStorage.setItem('cached_pets_list', JSON.stringify(cached));
+  } catch (e) {}
 
   return payload;
 }

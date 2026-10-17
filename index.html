@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Patas & Memórias 🐾</title>
   <meta name="description" content="Cápsula digital de memórias afetivas. Guarde fotos, histórias e momentos eternos." />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239c422b'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'/></svg>" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -16,12 +16,47 @@
   <header class="app-header">
     <div class="header-inner">
       <div class="brand">
-        <div class="brand-paw">
-          <span class="brand-paw-icon" aria-hidden="true"></span>
+        <div class="brand-logo-wrap">
+          <img src="/assets/logo.png" alt="Patas & Memórias Logo" class="brand-logo-img" />
         </div>
         <div class="brand-text-block">
           <h1 class="brand-name">Patas & Memórias</h1>
           <span class="brand-tag" id="brandTagText">Cápsula Digital</span>
+        </div>
+      </div>
+
+      <!-- PET SWITCHER (Troca rápida de pet) -->
+      <div class="pet-switcher-container" id="petSwitcherContainer">
+        <button type="button" class="btn-pet-switcher is-loading" id="btnPetSwitcher" aria-haspopup="true" aria-expanded="false" title="Trocar de Pet">
+          <div class="switcher-avatar-wrap">
+            <img id="switcherPetAvatar" src="" alt="Pet" class="switcher-avatar" style="display: none;" />
+            <span id="switcherPetFallback" class="switcher-fallback">
+              <span class="brand-paw-icon switcher-logo-icon" aria-hidden="true"></span>
+            </span>
+          </div>
+          <span class="switcher-pet-name" id="switcherPetName"></span>
+          <svg class="switcher-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div class="pet-switcher-dropdown" id="petSwitcherDropdown" role="menu" aria-hidden="true">
+          <div class="dropdown-header">
+            <span class="dropdown-title">Seus Companheiros</span>
+          </div>
+          <div class="dropdown-pets-list" id="dropdownPetsList">
+            <!-- Gerado dinamicamente -->
+          </div>
+          <div class="dropdown-footer">
+            <button type="button" class="btn-dropdown-add-pet" id="btnDropdownAddPet">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>+ Novo Companheiro</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

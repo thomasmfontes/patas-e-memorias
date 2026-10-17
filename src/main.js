@@ -2,6 +2,8 @@
 import {
   ensureAuthenticated,
   getCurrentCapsuleId,
+  sanitizeCapsuleId,
+  getRegisteredPets,
   subscribeToMemories,
   createMemory,
   toggleMemoryFavorite,
@@ -126,6 +128,7 @@ function renderCapsuleProfile() {
     if (brandTag) brandTag.textContent = 'Cápsula Digital';
     if (timelineTitle) timelineTitle.textContent = 'A Jornada';
     document.title = 'Patas & Memórias 🐾';
+    updatePetSwitcherUI(true);
     return;
   }
 
@@ -159,6 +162,150 @@ function renderCapsuleProfile() {
     epitaphEl.textContent = capsuleProfile.epitaph
       ? `“${capsuleProfile.epitaph.replace(/^[“"]|[”"]$/g, '')}”`
       : '';
+  }
+
+  updatePetSwitcherUI(false);
+}
+
+// -------------------------------------------------------------
+// PET SWITCHER LOGIC (SELETOR RÁPIDO DE PETS)
+// -------------------------------------------------------------
+
+const PET_FALLBACK_ICON_HTML = `<span class="brand-paw-icon switcher-logo-icon" aria-hidden="true"></span>`;
+
+function updatePetSwitcherUI(isLoading = false) {
+  const btn = document.getElementById('btnPetSwitcher');
+  const switcherPetName = document.getElementById('switcherPetName');
+  const switcherAvatar = document.getElementById('switcherPetAvatar');
+  const switcherFallback = document.getElementById('switcherPetFallback');
+
+  if (isLoading) {
+    if (btn) {
+      btn.classList.add('is-loading');
+      btn.classList.remove('is-loaded');
+    }
+    if (switcherPetName) switcherPetName.textContent = '';
+    return;
+  }
+
+  const displayName = capsuleProfile?.name || (activeCapsuleId === 'bento' ? 'Bento' : activeCapsuleId);
+  if (switcherPetName) switcherPetName.textContent = displayName;
+
+  if (capsuleProfile?.photo && switcherAvatar && switcherFallback) {
+    switcherAvatar.src = capsuleProfile.photo;
+    switcherAvatar.alt = displayName;
+    switcherAvatar.style.display = 'block';
+    switcherFallback.style.display = 'none';
+  } else if (switcherAvatar && switcherFallback) {
+    switcherAvatar.style.display = 'none';
+    switcherFallback.style.display = 'flex';
+  }
+
+  if (btn) {
+    requestAnimationFrame(() => {
+      btn.classList.remove('is-loading');
+      btn.classList.add('is-loaded');
+    });
+  }
+}
+
+async function renderPetsDropdown() {
+  const listEl = document.getElementById('dropdownPetsList');
+  if (!listEl) return;
+
+  try {
+    const pets = await getRegisteredPets();
+
+    // Garante que o pet ativo atual está na lista
+    if (capsuleProfile && !pets.some(p => p.id === activeCapsuleId)) {
+      pets.unshift({
+        id: activeCapsuleId,
+        name: capsuleProfile.name || activeCapsuleId,
+        photo: capsuleProfile.photo || '',
+        subtitle: capsuleProfile.subtitle || capsuleProfile.years || ''
+      });
+    }
+
+    if (pets.length === 0) {
+      listEl.innerHTML = `
+        <div style="padding: 14px; text-align: center; font-size: 12px; color: var(--text-muted);">
+          Nenhum companheiro registrado ainda.
+        </div>
+      `;
+      return;
+    }
+
+    listEl.innerHTML = pets.map(pet => {
+      const isActive = (pet.id === activeCapsuleId);
+      const petName = escapeHtml(pet.name || pet.id);
+      const petSub = escapeHtml(pet.subtitle || '');
+      const avatarHtml = pet.photo
+        ? `<img src="${pet.photo}" alt="${petName}" class="pet-item-avatar" />`
+        : `<span class="switcher-fallback">${PET_FALLBACK_ICON_HTML}</span>`;
+
+      const checkHtml = isActive
+        ? `<svg class="pet-item-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+        : '';
+
+      return `
+        <button type="button" class="dropdown-pet-item ${isActive ? 'active' : ''}" data-pet-id="${escapeHtml(pet.id)}" role="menuitem">
+          <div class="pet-item-avatar-wrap">
+            ${avatarHtml}
+          </div>
+          <div class="pet-item-info">
+            <div class="pet-item-name">${petName}</div>
+            ${petSub ? `<div class="pet-item-subtitle">${petSub}</div>` : ''}
+          </div>
+          ${checkHtml}
+        </button>
+      `;
+    }).join('');
+
+    // Listener de clique para troca rápida de pet
+    listEl.querySelectorAll('.dropdown-pet-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const petId = btn.getAttribute('data-pet-id');
+        closePetSwitcher();
+        if (petId !== activeCapsuleId) {
+          const targetUrl = petId === 'bento' ? '/' : `/${encodeURIComponent(petId)}`;
+          window.location.href = targetUrl;
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Erro ao listar companheiros no dropdown:', err);
+  }
+}
+
+function openPetSwitcher() {
+  const btn = document.getElementById('btnPetSwitcher');
+  const dropdown = document.getElementById('petSwitcherDropdown');
+  if (btn && dropdown) {
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    dropdown.classList.add('open');
+    dropdown.setAttribute('aria-hidden', 'false');
+    renderPetsDropdown();
+  }
+}
+
+function closePetSwitcher() {
+  const btn = document.getElementById('btnPetSwitcher');
+  const dropdown = document.getElementById('petSwitcherDropdown');
+  if (btn && dropdown) {
+    btn.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    dropdown.classList.remove('open');
+    dropdown.setAttribute('aria-hidden', 'true');
+  }
+}
+
+function togglePetSwitcher() {
+  const dropdown = document.getElementById('petSwitcherDropdown');
+  if (dropdown && dropdown.classList.contains('open')) {
+    closePetSwitcher();
+  } else {
+    openPetSwitcher();
   }
 }
 
@@ -872,6 +1019,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderAll();
     showToast('Não foi possível conectar. Tente novamente mais tarde.');
     console.error('Erro de conexão:', err);
+  }
+
+  // Pet Switcher Listeners
+  const btnPetSwitcher = document.getElementById('btnPetSwitcher');
+  if (btnPetSwitcher) {
+    btnPetSwitcher.addEventListener('click', (e) => {
+      e.stopPropagation();
+      togglePetSwitcher();
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#petSwitcherContainer')) {
+      closePetSwitcher();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closePetSwitcher();
+    }
+  });
+
+  const btnDropdownAddPet = document.getElementById('btnDropdownAddPet');
+  if (btnDropdownAddPet) {
+    btnDropdownAddPet.addEventListener('click', () => {
+      closePetSwitcher();
+      const petName = window.prompt('Qual o nome do novo companheiro? (Ex: Mel, Thor, Luna)');
+      if (petName && petName.trim()) {
+        const slug = sanitizeCapsuleId(petName);
+        window.location.href = `/${encodeURIComponent(slug)}`;
+      }
+    });
   }
 
   // Tab switching
