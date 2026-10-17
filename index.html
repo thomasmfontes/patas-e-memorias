@@ -34,7 +34,7 @@
     <aside class="sidebar-column">
       
       <!-- Profile Card -->
-      <section class="card profile-card">
+      <section class="card profile-card is-loading" id="profileCardSection">
         <div class="tribute-photo-wrap" id="profilePhotoWrap" title="Clique para personalizar foto">
           <img id="profilePhotoImg" src="" alt="Foto do Pet" class="tribute-photo" style="display: none;" />
           <div id="profilePhotoPlaceholder" class="tribute-photo-placeholder">🐾</div>
@@ -211,7 +211,34 @@
         </div>
 
         <div class="memories-feed" id="memoriesFeed">
-          <!-- Rendered dynamically -->
+          <div class="memory-card skeleton-memory-card" aria-hidden="true">
+            <div class="card-header">
+              <div class="skeleton-bone skeleton-badge"></div>
+              <div class="skeleton-bone skeleton-date"></div>
+              <div class="skeleton-bone skeleton-icon"></div>
+            </div>
+            <div class="skeleton-bone skeleton-photo"></div>
+            <div class="card-content">
+              <div class="skeleton-bone skeleton-title"></div>
+              <div class="skeleton-bone skeleton-text line-1"></div>
+              <div class="skeleton-bone skeleton-text line-2"></div>
+              <div class="skeleton-bone skeleton-footer"></div>
+            </div>
+          </div>
+          <div class="memory-card skeleton-memory-card" aria-hidden="true">
+            <div class="card-header">
+              <div class="skeleton-bone skeleton-badge"></div>
+              <div class="skeleton-bone skeleton-date"></div>
+              <div class="skeleton-bone skeleton-icon"></div>
+            </div>
+            <div class="skeleton-bone skeleton-photo"></div>
+            <div class="card-content">
+              <div class="skeleton-bone skeleton-title"></div>
+              <div class="skeleton-bone skeleton-text line-1"></div>
+              <div class="skeleton-bone skeleton-text line-2"></div>
+              <div class="skeleton-bone skeleton-footer"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Empty State Card -->
@@ -253,7 +280,12 @@
         </div>
 
         <div class="gallery-grid" id="galleryGrid">
-          <!-- Rendered dynamically -->
+          <div class="gallery-card skeleton-gallery-card" aria-hidden="true"><div class="skeleton-bone skeleton-full"></div></div>
+          <div class="gallery-card skeleton-gallery-card" aria-hidden="true"><div class="skeleton-bone skeleton-full"></div></div>
+          <div class="gallery-card skeleton-gallery-card" aria-hidden="true"><div class="skeleton-bone skeleton-full"></div></div>
+          <div class="gallery-card skeleton-gallery-card" aria-hidden="true"><div class="skeleton-bone skeleton-full"></div></div>
+          <div class="gallery-card skeleton-gallery-card" aria-hidden="true"><div class="skeleton-bone skeleton-full"></div></div>
+          <div class="gallery-card skeleton-gallery-card" aria-hidden="true"><div class="skeleton-bone skeleton-full"></div></div>
         </div>
       </section>
 
@@ -265,7 +297,24 @@
         </div>
 
         <div class="timeline-flow" id="timelineContainer">
-          <!-- Rendered dynamically -->
+          <div class="timeline-step skeleton-timeline-step" aria-hidden="true">
+            <div class="timeline-dot skeleton-bone" style="border:none;"></div>
+            <div class="timeline-box" style="border-color: var(--border-delicate);">
+              <div class="skeleton-bone skeleton-timeline-tag"></div>
+              <div class="skeleton-bone skeleton-timeline-title"></div>
+              <div class="skeleton-bone skeleton-text line-1"></div>
+              <div class="skeleton-bone skeleton-text line-2"></div>
+            </div>
+          </div>
+          <div class="timeline-step skeleton-timeline-step" aria-hidden="true">
+            <div class="timeline-dot skeleton-bone" style="border:none;"></div>
+            <div class="timeline-box" style="border-color: var(--border-delicate);">
+              <div class="skeleton-bone skeleton-timeline-tag"></div>
+              <div class="skeleton-bone skeleton-timeline-title"></div>
+              <div class="skeleton-bone skeleton-text line-1"></div>
+              <div class="skeleton-bone skeleton-text line-2"></div>
+            </div>
+          </div>
         </div>
       </section>
 

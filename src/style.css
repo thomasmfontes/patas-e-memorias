@@ -2482,32 +2482,223 @@ body.modal-open {
   border-color: rgba(156, 66, 43, 0.25);
 }
 
-
-.loading-state {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 56px 24px;
-  background: var(--surface);
-  border: 1px solid var(--border-delicate);
-  border-radius: var(--radius-lg);
-  color: var(--text-muted);
-  font-size: 14px;
+/* ============================================================= */
+/* PROFESSIONAL SKELETON LOADING SYSTEM                          */
+/* ============================================================= */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--primary-light);
-  border-top-color: var(--primary);
+.skeleton-bone {
+  background: linear-gradient(
+    90deg,
+    rgba(140, 95, 60, 0.06) 25%,
+    rgba(140, 95, 60, 0.16) 37%,
+    rgba(140, 95, 60, 0.06) 63%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Profile Card Skeleton State */
+.profile-card.is-loading .tribute-photo-wrap {
+  border-color: rgba(140, 95, 60, 0.1);
+  box-shadow: none;
+}
+
+.profile-card.is-loading #profilePhotoImg,
+.profile-card.is-loading #profilePhotoPlaceholder {
+  display: none !important;
+}
+
+.profile-card.is-loading .tribute-photo-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  background: linear-gradient(
+    90deg,
+    rgba(140, 95, 60, 0.06) 25%,
+    rgba(140, 95, 60, 0.16) 37%,
+    rgba(140, 95, 60, 0.06) 63%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.profile-card.is-loading .pet-title {
+  display: inline-block;
+  min-width: 140px;
+  height: 24px;
+  border-radius: 8px;
+  color: transparent !important;
+  background: linear-gradient(
+    90deg,
+    rgba(140, 95, 60, 0.06) 25%,
+    rgba(140, 95, 60, 0.16) 37%,
+    rgba(140, 95, 60, 0.06) 63%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.profile-card.is-loading .pet-lifespan {
+  display: inline-block;
+  min-width: 110px;
+  height: 16px;
+  border-radius: 6px;
+  color: transparent !important;
+  background: linear-gradient(
+    90deg,
+    rgba(140, 95, 60, 0.06) 25%,
+    rgba(140, 95, 60, 0.16) 37%,
+    rgba(140, 95, 60, 0.06) 63%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.profile-card.is-loading .pet-lifespan * {
+  visibility: hidden;
+}
+
+.profile-card.is-loading .profile-epitaph {
+  display: inline-block;
+  width: 90%;
+  max-width: 280px;
+  height: 28px;
+  border-radius: 6px;
+  color: transparent !important;
+  background: linear-gradient(
+    90deg,
+    rgba(140, 95, 60, 0.06) 25%,
+    rgba(140, 95, 60, 0.16) 37%,
+    rgba(140, 95, 60, 0.06) 63%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.profile-card.is-loading .btn-edit-profile {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.profile-card.is-loading .stat-val {
+  color: transparent !important;
+  min-width: 22px;
+  height: 18px;
+  display: inline-block;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(140, 95, 60, 0.06) 25%,
+    rgba(140, 95, 60, 0.16) 37%,
+    rgba(140, 95, 60, 0.06) 63%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+/* Feed Memory Card Skeleton */
+.skeleton-memory-card {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.9;
+}
+
+.skeleton-badge {
+  width: 84px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.skeleton-date {
+  width: 110px;
+  height: 16px;
+  border-radius: 6px;
+}
+
+.skeleton-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+.skeleton-photo {
+  margin: 0 16px 14px 16px;
+  height: 240px;
+  border-radius: 14px;
+}
+
+.skeleton-title {
+  width: 60%;
+  height: 22px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.skeleton-text {
+  height: 14px;
+  border-radius: 5px;
+  margin-bottom: 8px;
+}
+
+.skeleton-text.line-1 {
+  width: 95%;
+}
+
+.skeleton-text.line-2 {
+  width: 70%;
+  margin-bottom: 16px;
+}
+
+.skeleton-footer {
+  width: 70px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+/* Gallery Skeleton Card */
+.skeleton-gallery-card {
+  pointer-events: none;
+  user-select: none;
+  border: 1px solid var(--border-delicate);
+}
+
+.skeleton-full {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+/* Timeline Skeleton */
+.skeleton-timeline-step {
+  pointer-events: none;
+  user-select: none;
+}
+
+.skeleton-timeline-tag {
+  width: 120px;
+  height: 14px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.skeleton-timeline-title {
+  width: 55%;
+  height: 18px;
+  border-radius: 6px;
+  margin-bottom: 10px;
 }
 

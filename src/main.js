@@ -20,6 +20,7 @@ let currentProfilePhotoDataUrl = '';
 let currentLightboxIndex = -1;
 let galleryPhotosList = [];
 let isLoadingMemories = true;
+let isLoadingProfile = true;
 
 // Escape HTML helper to prevent XSS when rendering user content from Firestore
 function escapeHtml(str) {
@@ -75,6 +76,7 @@ function showToast(message) {
 
 // Render Capsule Profile from Firestore
 function renderCapsuleProfile() {
+  const profileCard = document.getElementById('profileCardSection');
   const photoImg = document.getElementById('profilePhotoImg');
   const photoPlaceholder = document.getElementById('profilePhotoPlaceholder');
   const nameEl = document.getElementById('profilePetName');
@@ -84,6 +86,13 @@ function renderCapsuleProfile() {
   const epitaphEl = document.getElementById('profilePetEpitaph');
   const brandTag = document.getElementById('brandTagText');
   const timelineTitle = document.getElementById('timelineHeaderTitle');
+
+  if (isLoadingProfile) {
+    if (profileCard) profileCard.classList.add('is-loading');
+    return;
+  }
+
+  if (profileCard) profileCard.classList.remove('is-loading');
 
   if (!capsuleProfile) {
     if (photoImg) photoImg.style.display = 'none';
@@ -198,9 +207,33 @@ function renderFeed() {
   if (isLoadingMemories) {
     if (emptyState) emptyState.style.display = 'none';
     container.innerHTML = `
-      <div class="loading-state">
-        <div class="loading-spinner"></div>
-        <p>Carregando lembranças...</p>
+      <div class="memory-card skeleton-memory-card" aria-hidden="true">
+        <div class="card-header">
+          <div class="skeleton-bone skeleton-badge"></div>
+          <div class="skeleton-bone skeleton-date"></div>
+          <div class="skeleton-bone skeleton-icon"></div>
+        </div>
+        <div class="skeleton-bone skeleton-photo"></div>
+        <div class="card-content">
+          <div class="skeleton-bone skeleton-title"></div>
+          <div class="skeleton-bone skeleton-text line-1"></div>
+          <div class="skeleton-bone skeleton-text line-2"></div>
+          <div class="skeleton-bone skeleton-footer"></div>
+        </div>
+      </div>
+      <div class="memory-card skeleton-memory-card" aria-hidden="true">
+        <div class="card-header">
+          <div class="skeleton-bone skeleton-badge"></div>
+          <div class="skeleton-bone skeleton-date"></div>
+          <div class="skeleton-bone skeleton-icon"></div>
+        </div>
+        <div class="skeleton-bone skeleton-photo"></div>
+        <div class="card-content">
+          <div class="skeleton-bone skeleton-title"></div>
+          <div class="skeleton-bone skeleton-text line-1"></div>
+          <div class="skeleton-bone skeleton-text line-2"></div>
+          <div class="skeleton-bone skeleton-footer"></div>
+        </div>
       </div>
     `;
     return;
@@ -291,6 +324,15 @@ function renderGallery() {
   const grid = document.getElementById('galleryGrid');
   if (!grid) return;
 
+  if (isLoadingMemories) {
+    grid.innerHTML = Array.from({ length: 6 }).map(() => `
+      <div class="gallery-card skeleton-gallery-card" aria-hidden="true">
+        <div class="skeleton-bone skeleton-full"></div>
+      </div>
+    `).join('');
+    return;
+  }
+
   galleryPhotosList = memories.filter(m => !!m.photo);
 
   if (galleryPhotosList.length === 0) {
@@ -331,6 +373,21 @@ function renderGallery() {
 function renderTimeline() {
   const container = document.getElementById('timelineContainer');
   if (!container) return;
+
+  if (isLoadingMemories) {
+    container.innerHTML = Array.from({ length: 3 }).map(() => `
+      <div class="timeline-step skeleton-timeline-step" aria-hidden="true">
+        <div class="timeline-dot skeleton-bone" style="border:none;"></div>
+        <div class="timeline-box" style="border-color: var(--border-delicate);">
+          <div class="skeleton-bone skeleton-timeline-tag"></div>
+          <div class="skeleton-bone skeleton-timeline-title"></div>
+          <div class="skeleton-bone skeleton-text line-1"></div>
+          <div class="skeleton-bone skeleton-text line-2"></div>
+        </div>
+      </div>
+    `).join('');
+    return;
+  }
 
   const sorted = [...memories].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
@@ -723,10 +780,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     subscribeToCapsuleProfile(
       (profileData) => {
         capsuleProfile = profileData;
+        isLoadingProfile = false;
         renderCapsuleProfile();
       },
       (err) => {
         console.error('Erro ao carregar perfil:', err);
+        isLoadingProfile = false;
+        renderCapsuleProfile();
       }
     );
 
@@ -745,7 +805,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     );
   } catch (err) {
+    isLoadingProfile = false;
     isLoadingMemories = false;
+    renderCapsuleProfile();
     renderAll();
     showToast('Não foi possível conectar. Tente novamente mais tarde.');
     console.error('Erro de conexão:', err);
