@@ -230,6 +230,7 @@ body.modal-open {
 
 /* Profile Card */
 .profile-card {
+  position: relative;
   padding: 26px 20px 22px 20px;
   text-align: center;
   display: flex;
@@ -322,34 +323,38 @@ body.modal-open {
 }
 
 .btn-edit-profile {
-  display: inline-flex;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 14px;
-  padding: 6px 16px;
-  background: var(--bg-body);
+  background: var(--surface-alt);
   border: 1px solid var(--border-delicate);
-  border-radius: var(--radius-full);
-  color: var(--text-body);
-  font-size: 12.5px;
-  font-weight: 500;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.18s ease;
   -webkit-tap-highlight-color: transparent;
+  box-shadow: none;
+  z-index: 2;
 }
 
 .btn-edit-profile:active {
-  transform: scale(0.96);
+  transform: scale(0.92);
   background: var(--surface-hover);
   color: var(--primary);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .btn-edit-profile:hover {
-    background: var(--surface);
-    border-color: rgba(156, 66, 43, 0.3);
+    background: var(--primary-light);
+    border-color: rgba(156, 66, 43, 0.25);
     color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(156, 66, 43, 0.12);
   }
 }
 
@@ -2631,11 +2636,13 @@ body.modal-open {
 }
 
 .profile-card.is-loading .btn-edit-profile {
-  display: inline-flex;
-  width: 140px;
-  height: 30px;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
   margin-top: 0;
-  border-radius: 999px;
+  border-radius: 50%;
   border-color: transparent;
   pointer-events: none;
   color: transparent !important;
