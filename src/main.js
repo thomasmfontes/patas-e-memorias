@@ -215,83 +215,93 @@ function updatePetSwitcherUI(isLoading = false) {
   }
 }
 
-async function renderPetsDropdown() {
+let cachedPetsList = [];
+
+async function syncRegisteredPets() {
+  try {
+    const pets = await getRegisteredPets();
+    cachedPetsList = pets || [];
+    renderPetsDropdown();
+  } catch (err) {
+    console.warn('Erro ao sincronizar pets:', err);
+  }
+}
+
+function renderPetsDropdown() {
   const listEl = document.getElementById('dropdownPetsList');
   if (!listEl) return;
 
-  try {
-    const pets = await getRegisteredPets();
+  const pets = [...cachedPetsList];
 
-    // Garante que o pet ativo atual está na lista apenas se tiver perfil salvo
-    if (capsuleProfile && capsuleProfile.name && capsuleProfile.name.trim() && !pets.some(p => p.id === activeCapsuleId)) {
-      pets.unshift({
-        id: activeCapsuleId,
-        name: capsuleProfile.name,
-        photo: capsuleProfile.photo || '',
-        subtitle: capsuleProfile.subtitle || capsuleProfile.years || ''
-      });
-    }
-
-    if (pets.length === 0) {
-      listEl.innerHTML = `
-        <div style="padding: 18px 12px; text-align: center; font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">
-          Nenhum companheiro cadastrado ainda. 
-        </div>
-      `;
-      return;
-    }
-
-    listEl.innerHTML = pets.map(pet => {
-      const isActive = (pet.id === activeCapsuleId);
-      const petName = escapeHtml(pet.name || pet.id);
-      const petSub = escapeHtml(pet.subtitle || '');
-      const avatarHtml = pet.photo
-        ? `<img src="${pet.photo}" alt="${petName}" class="pet-item-avatar" />`
-        : `<span class="switcher-fallback">${PET_FALLBACK_ICON_HTML}</span>`;
-
-      const checkHtml = isActive
-        ? `<svg class="pet-item-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`
-        : '';
-
-      return `
-        <button type="button" class="dropdown-pet-item ${isActive ? 'active' : ''}" data-pet-id="${escapeHtml(pet.id)}" role="menuitem">
-          <div class="pet-item-avatar-wrap">
-            ${avatarHtml}
-          </div>
-          <div class="pet-item-info">
-            <div class="pet-item-name">${petName}</div>
-            ${petSub ? `<div class="pet-item-subtitle">${petSub}</div>` : ''}
-          </div>
-          ${checkHtml}
-        </button>
-      `;
-    }).join('');
-
-    // Listener de clique para troca rápida de pet
-    listEl.querySelectorAll('.dropdown-pet-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const petId = btn.getAttribute('data-pet-id');
-        closePetSwitcher();
-        if (petId !== activeCapsuleId) {
-          const targetUrl = petId === 'bento' ? '/' : `/${encodeURIComponent(petId)}`;
-          window.location.href = targetUrl;
-        }
-      });
+  // Garante que o pet ativo atual está na lista apenas se tiver perfil salvo
+  if (capsuleProfile && capsuleProfile.name && capsuleProfile.name.trim() && !pets.some(p => p.id === activeCapsuleId)) {
+    pets.unshift({
+      id: activeCapsuleId,
+      name: capsuleProfile.name,
+      photo: capsuleProfile.photo || '',
+      subtitle: capsuleProfile.subtitle || capsuleProfile.years || ''
     });
-  } catch (err) {
-    console.error('Erro ao listar companheiros no dropdown:', err);
   }
+
+  if (pets.length === 0) {
+    listEl.innerHTML = `
+      <div style="padding: 18px 12px; text-align: center; font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">
+        Nenhum companheiro cadastrado ainda.
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = pets.map(pet => {
+    const isActive = (pet.id === activeCapsuleId);
+    const petName = escapeHtml(pet.name || pet.id);
+    const petSub = escapeHtml(pet.subtitle || '');
+    const avatarHtml = pet.photo
+      ? `<img src="${pet.photo}" alt="${petName}" class="pet-item-avatar" />`
+      : `<span class="switcher-fallback">${PET_FALLBACK_ICON_HTML}</span>`;
+
+    const checkHtml = isActive
+      ? `<svg class="pet-item-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+      : '';
+
+    return `
+      <button type="button" class="dropdown-pet-item ${isActive ? 'active' : ''}" data-pet-id="${escapeHtml(pet.id)}" role="menuitem">
+        <div class="pet-item-avatar-wrap">
+          ${avatarHtml}
+        </div>
+        <div class="pet-item-info">
+          <div class="pet-item-name">${petName}</div>
+          ${petSub ? `<div class="pet-item-subtitle">${petSub}</div>` : ''}
+        </div>
+        ${checkHtml}
+      </button>
+    `;
+  }).join('');
+
+  // Listener de clique para troca rápida de pet
+  listEl.querySelectorAll('.dropdown-pet-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const petId = btn.getAttribute('data-pet-id');
+      closePetSwitcher();
+      if (petId !== activeCapsuleId) {
+        const targetUrl = petId === 'bento' ? '/' : `/${encodeURIComponent(petId)}`;
+        window.location.href = targetUrl;
+      }
+    });
+  });
 }
 
 function openPetSwitcher() {
   const btn = document.getElementById('btnPetSwitcher');
   const dropdown = document.getElementById('petSwitcherDropdown');
   if (btn && dropdown) {
+    renderPetsDropdown();
     btn.classList.add('open');
     btn.setAttribute('aria-expanded', 'true');
     dropdown.classList.add('open');
     dropdown.setAttribute('aria-hidden', 'false');
-    renderPetsDropdown();
+    syncRegisteredPets();
   }
 }
 
@@ -1078,6 +1088,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     await ensureAuthenticated();
+    syncRegisteredPets();
 
     // Subscribe to capsule profile for the active NFC Pet
     subscribeToCapsuleProfile(
@@ -1086,6 +1097,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         capsuleProfile = profileData;
         isLoadingProfile = false;
         renderCapsuleProfile();
+        syncRegisteredPets();
       },
       (err) => {
         console.error('Erro ao carregar perfil:', err);
