@@ -694,6 +694,37 @@
     </div>
   </div>
 
+  <!-- MODAL DE PROMPT ELEGANTE (SUBSTITUI WINDOW.PROMPT) -->
+  <div class="modal-backdrop confirm-backdrop" id="promptModal" aria-hidden="true">
+    <div class="modal-card prompt-card" role="dialog" aria-modal="true" aria-labelledby="promptTitle">
+      <div class="confirm-icon-wrap info">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+      </div>
+      <h3 class="confirm-title" id="promptTitle">Novo Companheiro</h3>
+      <p class="confirm-message" id="promptMessage">Qual o nome do pet para criar a cápsula digital?</p>
+      
+      <form id="promptForm" class="prompt-form" onsubmit="return false;">
+        <input 
+          type="text" 
+          id="promptInput" 
+          class="prompt-input" 
+          placeholder="Ex: Mel, Thor, Luna..." 
+          maxlength="40" 
+          autocomplete="off" 
+          required 
+        />
+        <div class="confirm-actions">
+          <button type="button" class="btn-cancel confirm-btn-cancel" id="promptCancelBtn">Cancelar</button>
+          <button type="submit" class="btn-confirm-action primary" id="promptActionBtn">Criar Cápsula</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- TOAST FEEDBACK -->
   <div class="toast" id="toastNotice" role="alert">
     <span id="toastMessage">Lembrança guardada com sucesso!</span>

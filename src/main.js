@@ -231,8 +231,7 @@ async function renderPetsDropdown() {
     if (pets.length === 0) {
       listEl.innerHTML = `
         <div style="padding: 18px 12px; text-align: center; font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">
-          Nenhum companheiro cadastrado ainda.<br>
-          <span style="font-size: 11.5px; color: var(--text-light);">Adicione um novo no botão abaixo.</span>
+          Nenhum companheiro cadastrado ainda. 
         </div>
       `;
       return;
@@ -859,6 +858,81 @@ function showConfirmModal({
   });
 }
 
+// In-app Custom Prompt Dialog (Replaces native window.prompt)
+function showPromptModal({
+  title = 'Novo Companheiro',
+  message = 'Qual o nome do pet para criar a cápsula digital?',
+  placeholder = 'Ex: Mel, Thor, Luna...',
+  confirmText = 'Criar Cápsula',
+  cancelText = 'Cancelar',
+  defaultValue = ''
+} = {}) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('promptModal');
+    const titleEl = document.getElementById('promptTitle');
+    const messageEl = document.getElementById('promptMessage');
+    const inputEl = document.getElementById('promptInput');
+    const formEl = document.getElementById('promptForm');
+    const actionBtn = document.getElementById('promptActionBtn');
+    const cancelBtn = document.getElementById('promptCancelBtn');
+
+    if (!modal || !inputEl) {
+      resolve(null);
+      return;
+    }
+
+    if (titleEl) titleEl.textContent = title;
+    if (messageEl) messageEl.textContent = message;
+    inputEl.placeholder = placeholder;
+    inputEl.value = defaultValue;
+    if (actionBtn) actionBtn.textContent = confirmText;
+    if (cancelBtn) cancelBtn.textContent = cancelText;
+
+    const cleanup = (result) => {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      formEl?.removeEventListener('submit', onSubmit);
+      cancelBtn?.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onBackdrop);
+      window.removeEventListener('keydown', onKey);
+      updateBodyScrollLock();
+      resolve(result);
+    };
+
+    const onSubmit = (e) => {
+      e.preventDefault();
+      const val = inputEl.value.trim();
+      if (!val) {
+        inputEl.focus();
+        return;
+      }
+      cleanup(val);
+    };
+
+    const onCancel = () => cleanup(null);
+    const onBackdrop = (e) => {
+      if (e.target === modal) cleanup(null);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') cleanup(null);
+    };
+
+    formEl?.addEventListener('submit', onSubmit);
+    cancelBtn?.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBackdrop);
+    window.addEventListener('keydown', onKey);
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    updateBodyScrollLock();
+
+    setTimeout(() => {
+      inputEl.focus();
+      inputEl.select();
+    }, 60);
+  });
+}
+
 // Add Memory Modal handling
 function openAddModal() {
   const modal = document.getElementById('addMemoryModal');
@@ -966,9 +1040,17 @@ function closeProfileModal() {
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async () => {
-  // Never show browser native alert dialogs
+  // Never show browser native alert/prompt/confirm dialogs
   window.alert = (msg) => {
     if (msg) showToast(String(msg));
+  };
+  window.prompt = () => {
+    console.warn('Native window.prompt blocked. Use showPromptModal() instead.');
+    return null;
+  };
+  window.confirm = () => {
+    console.warn('Native window.confirm blocked. Use showConfirmModal() instead.');
+    return false;
   };
 
   // Universal observer to keep body scroll lock strictly in sync with any modal state
@@ -1047,9 +1129,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const btnDropdownAddPet = document.getElementById('btnDropdownAddPet');
   if (btnDropdownAddPet) {
-    btnDropdownAddPet.addEventListener('click', () => {
+    btnDropdownAddPet.addEventListener('click', async () => {
       closePetSwitcher();
-      const petName = window.prompt('Qual o nome do novo companheiro? (Ex: Mel, Thor, Luna)');
+      const petName = await showPromptModal({
+        title: 'Novo Companheiro',
+        message: 'Qual o nome do pet para criar a cápsula digital?',
+        placeholder: 'Ex: Mel, Thor, Luna...',
+        confirmText: 'Criar Cápsula'
+      });
       if (petName && petName.trim()) {
         const slug = sanitizeCapsuleId(petName);
         window.location.href = `/${encodeURIComponent(slug)}`;
