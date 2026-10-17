@@ -139,7 +139,7 @@ function renderCapsuleProfile() {
     if (epitaphEl) {
       epitaphEl.textContent = 'Personalize os dados do seu companheiro para eternizar cada lembrança com carinho.';
     }
-    if (brandTag) brandTag.textContent = (fallbackName !== 'Sua Cápsula') ? `Cápsula Digital • ${fallbackName}` : 'Cápsula Digital';
+    if (brandTag) brandTag.textContent = 'Cápsula Digital';
     if (timelineTitle) timelineTitle.textContent = (fallbackName !== 'Sua Cápsula') ? `A Jornada de ${fallbackName}` : 'A Jornada';
     document.title = (fallbackName !== 'Sua Cápsula') ? `Patas & Memórias • ${fallbackName} 🐾` : 'Patas & Memórias 🐾';
     updatePetSwitcherUI(false);
@@ -148,9 +148,7 @@ function renderCapsuleProfile() {
 
   const petName = capsuleProfile.name || 'Sua Cápsula';
   if (nameEl) nameEl.textContent = petName;
-  if (brandTag) {
-    brandTag.textContent = capsuleProfile.name ? `Cápsula Digital • ${capsuleProfile.name}` : 'Cápsula Digital';
-  }
+  if (brandTag) brandTag.textContent = 'Cápsula Digital';
   if (timelineTitle) timelineTitle.textContent = `A Jornada de ${petName}`;
   document.title = `Patas & Memórias • ${petName} 🐾`;
 
